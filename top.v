@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-`include "speckle_sensor_controller.v"
+`include "componentes/speckle_sensor_controller.v"
 
 `define COLS     24
 `define ROWS     24
