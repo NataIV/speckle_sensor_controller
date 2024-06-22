@@ -2,15 +2,15 @@
 `define SPECKLE_SENSOR_CONTROLLER_H
 `timescale 1ns / 1ps
 
-//`include "top_level_fsm/top_fsm.v"
-//`include "chip_driver/chip_driver.v"
-//`include "counter_offset/counter_offset.v"
-//`include "config_fsm/cfg_fsm.v"
-//`include "ram/ram.v"
-//`include "scan_fsm/scan_module.v"
-//`include "scan_fsm/scan_fsm.v"
-//`include "scan_fsm/cfg_word_sr.v"
-//`include "process_fsm/process_fsm.v"
+`include "top_level_fsm/top_fsm.v"
+`include "chip_driver/chip_driver.v"
+`include "counter_offset/counter_offset.v"
+`include "config_fsm/cfg_fsm.v"
+`include "ram/ram.v"
+`include "scan_fsm/scan_module.v"
+`include "scan_fsm/scan_fsm.v"
+`include "scan_fsm/cfg_word_sr.v"
+`include "process_fsm/process_fsm.v"
 //`include "ram/ila_ram_scan.v"
 
 `define CLOCK_FREQ 125_000_000
