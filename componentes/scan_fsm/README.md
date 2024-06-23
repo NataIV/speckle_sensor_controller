@@ -34,7 +34,7 @@ Las palabras de configuracion resultantes son:
     Utilizando la palabra de configuracion 0001000
     Se leer el pixel 1:
 
-![1718994186021](https://file+.vscode-resource.vscode-cdn.net/d%3A/Mega/pip/verilog/componentes/scan_fsm/image/README/1718994186021.png)
+![1718994186021](image/README/1718994186021.png)
 
 
 
