@@ -1,6 +1,6 @@
 # Componentes
 
-Directorio con todos los componentes a usar a modo de "Bibliotecas". Contiene los siguientes componentes:
+Directorio con todos los componentes a usar a modo de "Bibliotecas".
 
 # Testbench
 
