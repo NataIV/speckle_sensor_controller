@@ -1,10 +1,10 @@
 # Componentes
 
-Directorio con todos los componentes a usar a modo de "Bibliotecas".
+Componentes a usar a modo de "Bibliotecas".
 
 # Testbench
 
-Directorio con un testbench que simula un proceso completo de ESCANEO -> PROCESAMIENTO -> CONFIGURACION. Se debe adjuntar el archivo "init.mem" para inicializar la memoria.
+Testbench que simula un proceso completo de ESCANEO -> PROCESAMIENTO -> CONFIGURACION. Se debe adjuntar el archivo "init.mem" para inicializar la memoria.
 
 # Configurar el proyecto de vivado
 
