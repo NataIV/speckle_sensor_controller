@@ -121,62 +121,67 @@ module cfg_fsm #(
         o_row_control[`COUNTER_LOADMAX_BIT] = fsm_row_reload;
     end
 
-    always @(*) begin
-        case (state)
-            ARL_CONFIG: begin
-                if(fsm_row_dec)begin
-                    o_col_control[2:0] = `COUNTER_NO_CHANGE;
-                    o_row_control[2:0] = `COUNTER_ENABLE | `COUNTER_DEC_1;
-                end else begin
+    always @(posedge clk) begin
+        if(rst)begin
+            o_col_control[2:0] = `COUNTER_NO_CHANGE;
+            o_row_control[2:0] = `COUNTER_NO_CHANGE;
+        end else begin
+            case (next_state)
+                ARL_CONFIG: begin
+                    if(fsm_row_dec)begin
+                        o_col_control[2:0] = `COUNTER_NO_CHANGE;
+                        o_row_control[2:0] = `COUNTER_ENABLE | `COUNTER_DEC_1;
+                    end else begin
+                        o_col_control[2:0] = `COUNTER_NO_CHANGE;
+                        o_row_control[2:0] = `COUNTER_NO_CHANGE;
+                    end
+                end
+                NE_CONFIG: begin
+                    if(fsm_row_dec)begin
+                        o_col_control[2:0] = `COUNTER_NO_CHANGE;
+                        o_row_control[2:0] = `COUNTER_ENABLE | `COUNTER_DEC_1;
+                    end else if (fsm_row_offset) begin
+                        o_col_control[2:0] = `COUNTER_NO_CHANGE;
+                        o_row_control[2:0] = `COUNTER_INC_1;
+                    end else begin
+                        o_col_control[2:0] = `COUNTER_NO_CHANGE;
+                        o_row_control[2:0] = `COUNTER_NO_CHANGE;
+                    end
+                end
+                SE_CONFIG: begin
+                    if(fsm_row_dec)begin
+                        o_col_control[2:0] = `COUNTER_NO_CHANGE;
+                        o_row_control[2:0] = `COUNTER_ENABLE | `COUNTER_DEC_1;
+                    end else if (fsm_row_offset) begin
+                        o_col_control[2:0] = `COUNTER_DEC_1;
+                        o_row_control[2:0] = `COUNTER_DEC_1;
+                    end else begin
+                        o_col_control[2:0] = `COUNTER_NO_CHANGE;
+                        o_row_control[2:0] = `COUNTER_NO_CHANGE;
+                    end
+                end
+                WW_CONFIG: begin
+                    if(fsm_row_dec)begin
+                        o_col_control[2:0] = `COUNTER_NO_CHANGE;
+                        o_row_control[2:0] = `COUNTER_ENABLE | `COUNTER_DEC_1;
+                    end else if (fsm_row_offset) begin
+                        o_col_control[2:0] = `COUNTER_INC_1;
+                        o_row_control[2:0] = `COUNTER_NO_CHANGE;
+                    end else begin
+                        o_col_control[2:0] = `COUNTER_NO_CHANGE;
+                        o_row_control[2:0] = `COUNTER_NO_CHANGE;
+                    end
+                end
+                COL_INCREMENT:begin
+                    o_col_control[2:0] = `COUNTER_ENABLE | `COUNTER_INC_1;
+                    o_row_control[2:0] = `COUNTER_NO_CHANGE;
+                end
+                default: begin
                     o_col_control[2:0] = `COUNTER_NO_CHANGE;
                     o_row_control[2:0] = `COUNTER_NO_CHANGE;
                 end
-            end
-            NE_CONFIG: begin
-                if(fsm_row_dec)begin
-                    o_col_control[2:0] = `COUNTER_NO_CHANGE;
-                    o_row_control[2:0] = `COUNTER_ENABLE | `COUNTER_DEC_1;
-                end else if (fsm_row_offset) begin
-                    o_col_control[2:0] = `COUNTER_NO_CHANGE;
-                    o_row_control[2:0] = `COUNTER_INC_1;
-                end else begin
-                    o_col_control[2:0] = `COUNTER_NO_CHANGE;
-                    o_row_control[2:0] = `COUNTER_NO_CHANGE;
-                end
-            end
-            SE_CONFIG: begin
-                if(fsm_row_dec)begin
-                    o_col_control[2:0] = `COUNTER_NO_CHANGE;
-                    o_row_control[2:0] = `COUNTER_ENABLE | `COUNTER_DEC_1;
-                end else if (fsm_row_offset) begin
-                    o_col_control[2:0] = `COUNTER_DEC_1;
-                    o_row_control[2:0] = `COUNTER_DEC_1;
-                end else begin
-                    o_col_control[2:0] = `COUNTER_NO_CHANGE;
-                    o_row_control[2:0] = `COUNTER_NO_CHANGE;
-                end
-            end
-            WW_CONFIG: begin
-                if(fsm_row_dec)begin
-                    o_col_control[2:0] = `COUNTER_NO_CHANGE;
-                    o_row_control[2:0] = `COUNTER_ENABLE | `COUNTER_DEC_1;
-                end else if (fsm_row_offset) begin
-                    o_col_control[2:0] = `COUNTER_INC_1;
-                    o_row_control[2:0] = `COUNTER_NO_CHANGE;
-                end else begin
-                    o_col_control[2:0] = `COUNTER_NO_CHANGE;
-                    o_row_control[2:0] = `COUNTER_NO_CHANGE;
-                end
-            end
-            COL_INCREMENT:begin
-                o_col_control[2:0] = `COUNTER_ENABLE | `COUNTER_INC_1;
-                o_row_control[2:0] = `COUNTER_NO_CHANGE;
-            end
-            default: begin
-                o_col_control[2:0] = `COUNTER_NO_CHANGE;
-                o_row_control[2:0] = `COUNTER_NO_CHANGE;
-            end
-        endcase
+            endcase
+        end
     end
 
 endmodule

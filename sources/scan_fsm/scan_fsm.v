@@ -294,37 +294,38 @@ module scan_fsm
 
 
     /*    Control del direccionamiento de memoria    */
-    always@(*)begin
-        case(state)
-        STATE_IDLE           : begin
+    always@(posedge clk)begin
+        if (i_rst)begin
             o_row_control = `COUNTER_RESET;
             o_col_control = `COUNTER_RESET;
+        end else begin
+            case(state_next)
+            STATE_IDLE           : begin
+                o_row_control = `COUNTER_RESET;
+                o_col_control = `COUNTER_RESET;
+            end
+            STATE_RAM_ROW_INC   : begin
+                o_row_control = `COUNTER_ENABLE | `COUNTER_INC_2;
+                o_col_control = `COUNTER_NO_CHANGE;
+            end
+            STATE_RAM_COL_INC : begin
+                o_row_control = `COUNTER_RESET;
+                o_col_control = `COUNTER_ENABLE | `COUNTER_INC_2;
+            end
+            STATE_RAM_WRITE   : begin
+                o_row_control = offset_row;
+                o_col_control = offset_col;
+            end
+            STATE_COL_NEXT_CFG_WORD  : begin
+                o_row_control = `COUNTER_RESET;
+                o_col_control = `COUNTER_RESET;
+            end
+            default: begin
+                o_row_control = `COUNTER_NO_CHANGE;
+                o_col_control = `COUNTER_NO_CHANGE;
+            end
+            endcase
         end
-        // STATE_CHECK_NEXT    : begin
-        //     o_row_control = `COUNTER_INC_2;
-        //     o_col_control = `COUNTER_INC_2;
-        // end
-        STATE_RAM_ROW_INC   : begin
-            o_row_control = `COUNTER_ENABLE | `COUNTER_INC_2;
-            o_col_control = `COUNTER_NO_CHANGE;
-        end
-        STATE_RAM_COL_INC : begin
-            o_row_control = `COUNTER_RESET;
-            o_col_control = `COUNTER_ENABLE | `COUNTER_INC_2;
-        end
-        STATE_RAM_WRITE   : begin
-            o_row_control = offset_row;
-            o_col_control = offset_col;
-        end
-        STATE_COL_NEXT_CFG_WORD  : begin
-            o_row_control = `COUNTER_RESET;
-            o_col_control = `COUNTER_RESET;
-        end
-        default: begin
-            o_row_control = `COUNTER_NO_CHANGE;
-            o_col_control = `COUNTER_NO_CHANGE;
-        end
-        endcase
     end
 
 

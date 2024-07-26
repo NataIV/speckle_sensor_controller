@@ -171,53 +171,54 @@ module process_fsm
     end
 
     /*    Control del direccionamiento de memoria    */
-    always@(*)begin
-        case(state)
-        IDLE           : begin
+    always@(posedge clk)begin
+        if(rst)begin
             o_row_control = `COUNTER_RESET;
             o_col_control = `COUNTER_RESET;
+        end else begin
+            case(state_next)
+            IDLE           : begin
+                o_row_control = `COUNTER_RESET;
+                o_col_control = `COUNTER_RESET;
+            end
+            RESET    : begin
+                o_row_control = `COUNTER_RESET;
+                o_col_control = `COUNTER_RESET;
+            end
+            LOAD_PIX_1_0 : begin
+                o_row_control = row_control_load_gp_1[pixel_cnt];
+                o_col_control = col_control_load_gp_1[pixel_cnt];
+            end
+            LOAD_PIX_2_0 : begin
+                o_row_control = row_control_load_gp_2[pixel_cnt];
+                o_col_control = col_control_load_gp_2[pixel_cnt];
+            end
+            SUBS : begin
+                o_row_control = row_control_load_gp_1[pixel_cnt];
+                o_col_control = col_control_load_gp_1[pixel_cnt];
+            end
+            WRITE_RAM : begin
+                o_row_control = row_control_load_gp_1[pixel_cnt];
+                o_col_control = col_control_load_gp_1[pixel_cnt];
+            end
+            ROW_INC   : begin
+                o_row_control = `COUNTER_ENABLE | `COUNTER_INC_2;
+                o_col_control = `COUNTER_NO_CHANGE;
+            end
+            COL_INC : begin
+                o_row_control = `COUNTER_RESET;
+                o_col_control = `COUNTER_ENABLE | `COUNTER_INC_2;
+            end
+            NEXT_PIXEL  : begin
+                o_row_control = `COUNTER_RESET;
+                o_col_control = `COUNTER_RESET;
+            end
+            default: begin
+                o_row_control = `COUNTER_NO_CHANGE;
+                o_col_control = `COUNTER_NO_CHANGE;
+            end
+            endcase
         end
-        RESET    : begin
-            o_row_control = `COUNTER_RESET;
-            o_col_control = `COUNTER_RESET;
-        end
-        LOAD_PIX_1_0 : begin
-            o_row_control = row_control_load_gp_1[pixel_cnt];
-            o_col_control = col_control_load_gp_1[pixel_cnt];
-        end
-        // SAVE_PIX_1 : begin
-        //     o_row_control = row_control_load_gp_1[pixel_cnt];
-        //     o_col_control = col_control_load_gp_1[pixel_cnt];
-        // end
-        LOAD_PIX_2_0 : begin
-            o_row_control = row_control_load_gp_2[pixel_cnt];
-            o_col_control = col_control_load_gp_2[pixel_cnt];
-        end
-        SUBS : begin
-            o_row_control = row_control_load_gp_1[pixel_cnt];
-            o_col_control = col_control_load_gp_1[pixel_cnt];
-        end
-        WRITE_RAM : begin
-            o_row_control = row_control_load_gp_1[pixel_cnt];
-            o_col_control = col_control_load_gp_1[pixel_cnt];
-        end
-        ROW_INC   : begin
-            o_row_control = `COUNTER_ENABLE | `COUNTER_INC_2;
-            o_col_control = `COUNTER_NO_CHANGE;
-        end
-        COL_INC : begin
-            o_row_control = `COUNTER_RESET;
-            o_col_control = `COUNTER_ENABLE | `COUNTER_INC_2;
-        end
-        NEXT_PIXEL  : begin
-            o_row_control = `COUNTER_RESET;
-            o_col_control = `COUNTER_RESET;
-        end
-        default: begin
-            o_row_control = `COUNTER_NO_CHANGE;
-            o_col_control = `COUNTER_NO_CHANGE;
-        end
-        endcase
     end
 
 
