@@ -139,11 +139,15 @@ module scan_fsm
         STATE_ROW_WRITE_0_1_WAIT      = 18,
         STATE_COL_WRITE_0000000_WAIT  = 19,
         STATE_CHECK_NEXT              = 20,
-        STATE_DONE                    = 21;
+        STATE_CLEAN_COL_REG           = 21,
+        STATE_CLEAN_COL_REG_WAIT      = 22,
+        STATE_CLEAN_PIXELS            = 23,
+        STATE_CLEAN_PIXELS_WAIT       = 24,
+        STATE_DONE                    = 25;
         
 
     /*    MEMORIA    */
-    always @(posedge clk or posedge i_rst) begin
+    always @(posedge clk) begin
         if(i_rst)
             state <= STATE_IDLE;
         else
@@ -195,24 +199,15 @@ module scan_fsm
         end
         STATE_RAM_WRITE      : begin
             // Escribo el valor en la memoria RAM
-            state_next = STATE_CHECK_NEXT;
-        end
-        STATE_CHECK_NEXT      : begin
-            // Mientras no sea la ultima fila, continuo escribiendo 0's en el registro de filas del chip fotodetector
-            // Cuando llegue a la ultima fila, desplazo la palabra de configuracion escribiendo 7 0's en el registro de columnas del chip fotodetector
-            // Cuando llego a la ultima columna, vuelvo a empezar todo el procedimiento con otra palabra de configuracion
-            if(!i_row_overflow)             state_next = STATE_ROW_WRITE_0_0;
-            else if(!i_col_overflow)        state_next = STATE_COL_WRITE_0000000;
-            else if(cfg_cnt < CFG_CNT_MAX)  state_next = STATE_COL_NEXT_CFG_WORD;
-            else                            state_next = STATE_DONE;
+            state_next = STATE_ROW_WRITE_0_0;
         end
         STATE_ROW_WRITE_0_0   : begin
             // desplazo el 1 en el registro de filas
             state_next = STATE_ROW_WRITE_0_0_WAIT;
         end
         STATE_ROW_WRITE_0_0_WAIT: begin
-            if(i_row_rdy)   state_next = STATE_ROW_WRITE_0_1;
-            else            state_next = STATE_ROW_WRITE_0_0_WAIT;
+            if(i_row_rdy) state_next = STATE_ROW_WRITE_0_1;
+            else          state_next = STATE_ROW_WRITE_0_0_WAIT;
         end
         STATE_ROW_WRITE_0_1   : begin
             // desplazo el 1 en el registro de filas
@@ -223,21 +218,38 @@ module scan_fsm
             else            state_next = STATE_ROW_WRITE_0_1_WAIT;
         end
         STATE_RAM_ROW_INC : begin
-            state_next = STATE_PIXELS_WRITE;
+            if(i_row_overflow)  state_next = STATE_CLEAN_PIXELS;
+            else                state_next = STATE_PIXELS_WRITE;
+        end
+        STATE_CLEAN_PIXELS: begin
+            state_next = STATE_CLEAN_PIXELS_WAIT;
+        end
+        STATE_CLEAN_PIXELS_WAIT: begin
+            if(i_key_rdy) state_next = STATE_RAM_COL_INC;
+            else          state_next = STATE_CLEAN_PIXELS_WAIT; 
+        end
+        STATE_RAM_COL_INC : begin
+            if(i_col_overflow)   state_next = STATE_COL_NEXT_CFG_WORD;
+            else                 state_next = STATE_COL_WRITE_0000000;
         end
         STATE_COL_WRITE_0000000  : begin
             state_next = STATE_COL_WRITE_0000000_WAIT;
         end
         STATE_COL_WRITE_0000000_WAIT  : begin
-            if(i_col_rdy)   state_next = STATE_RAM_COL_INC;
-            else            state_next = STATE_COL_WRITE_0000000_WAIT;
-        end
-        STATE_RAM_COL_INC : begin
-            state_next = STATE_ROW_WRITE_1;
+            if(i_col_rdy) state_next = STATE_ROW_WRITE_1;
+            else          state_next = STATE_COL_WRITE_0000000_WAIT;
         end
         STATE_COL_NEXT_CFG_WORD  : begin 
-            state_next = STATE_COL_WRITE_CFG_WORD;
+            if(cfg_cnt < CFG_CNT_MAX) state_next = STATE_COL_WRITE_CFG_WORD;
+            else state_next = STATE_CLEAN_COL_REG;
         end
+        STATE_CLEAN_COL_REG: begin
+            state_next = STATE_CLEAN_COL_REG_WAIT;
+        end
+        STATE_CLEAN_COL_REG_WAIT: begin
+            if(i_col_rdy) state_next = STATE_DONE;
+            else          state_next = STATE_CLEAN_COL_REG_WAIT;
+        end 
         STATE_DONE : begin
             state_next = STATE_IDLE;
         end
@@ -288,10 +300,10 @@ module scan_fsm
             o_row_control = `COUNTER_RESET;
             o_col_control = `COUNTER_RESET;
         end
-        STATE_CHECK_NEXT    : begin
-            o_row_control = `COUNTER_INC_2;
-            o_col_control = `COUNTER_INC_2;
-        end
+        // STATE_CHECK_NEXT    : begin
+        //     o_row_control = `COUNTER_INC_2;
+        //     o_col_control = `COUNTER_INC_2;
+        // end
         STATE_RAM_ROW_INC   : begin
             o_row_control = `COUNTER_ENABLE | `COUNTER_INC_2;
             o_col_control = `COUNTER_NO_CHANGE;
@@ -317,11 +329,11 @@ module scan_fsm
 
 
 /*    LOGICA DE SALIDA    */
-    assign o_col_reg_write = (state == STATE_COL_WRITE_CFG_WORD) || (state == STATE_COL_WRITE_0000000);
+    assign o_col_reg_write = (state == STATE_COL_WRITE_CFG_WORD) || (state == STATE_COL_WRITE_0000000) || (state == STATE_CLEAN_COL_REG);
     assign o_col_reg_data  = (state == STATE_COL_WRITE_CFG_WORD) ? cfg_word[cfg_cnt] : 7'b0000000;
     assign o_row_reg_data  = (state == STATE_ROW_WRITE_1);
     assign o_row_reg_write = (state == STATE_ROW_WRITE_1) || (state == STATE_ROW_WRITE_0_0) || (state == STATE_ROW_WRITE_0_1);
-    assign o_key_write     = (state == STATE_PIXELS_WRITE);
+    assign o_key_write     = (state == STATE_PIXELS_WRITE) || (state == STATE_CLEAN_PIXELS);
     assign o_ram_write     = (state == STATE_RAM_WRITE);
     assign o_adc_trig      = (state == STATE_ADC_TRIGGER);
     assign o_scan_ready    = (state == STATE_DONE);

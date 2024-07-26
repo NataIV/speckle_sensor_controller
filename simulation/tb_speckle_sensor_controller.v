@@ -18,7 +18,7 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-
+`include "../sources/speckle_sensor_controller.v"
 
 module tb_speckle_sensor_controller();
 

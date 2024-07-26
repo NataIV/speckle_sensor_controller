@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 
-module testbench();
+module tb_chip_driver();
 
     reg clk;        
     reg rst;        

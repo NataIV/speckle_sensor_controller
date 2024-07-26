@@ -1,3 +1,5 @@
+`ifndef RAM_H
+`define RAM_H
 `timescale 1ns / 1ps
 
 //  Xilinx Single Port No Change RAM
@@ -97,5 +99,5 @@ endmodule
   );
 
 */
-						
+`endif						
 						

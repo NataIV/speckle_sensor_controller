@@ -11,7 +11,7 @@
 `include "scan_fsm/scan_fsm.v"
 `include "scan_fsm/cfg_word_sr.v"
 `include "process_fsm/process_fsm.v"
-//`include "ram/ila_ram_scan.v"
+`include "ram/ila_ram_scan.v"
 
 `define CLOCK_FREQ 125_000_000
 `define WRITE_FREQ       1_000
@@ -144,6 +144,7 @@ wire                         to_ram_wren;
 wire [NB_DATA-1:0]           to_ram_data_in;
 wire                         to_ram_read;
 wire                         to_ram_rsta;
+wire to_ram_ena;
 
 
 /*--------------------------- CONNECTIONS ------------------------------*/
@@ -339,9 +340,14 @@ generate
             .clk(clk),
             .rst(rst),
             .i_start_scan(btn[3]),
-            .i_ram_data(__from_ram_data_out),
             .o_ram_addr(ram_dbg_addr),
             .o_ram_dbg(ram_dbg)
+        );
+
+        ila_bram_debug u_ila (   
+            .clk(clk),
+            .data(__from_ram_data_out),
+            .trigger(ram_dbg)
         );
 
     end else begin
