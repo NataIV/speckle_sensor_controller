@@ -33,6 +33,7 @@ module chip_driver
     input                    i_write_row,
     input                    i_data_col,
     input                    i_data_row,
+    input                    i_rst_row,
 
     input [NB_DIVIDER-1 : 0] i_clk_div_sr,
     input [NB_DIVIDER-1 : 0] i_clk_div_key,
@@ -42,22 +43,24 @@ module chip_driver
     output                   o_data_col,
     output                   o_data_row,
     output                   o_write_key,
+    output                   o_rst_row,
     output                   o_rdy,
 
     output                   o_sync
 );
 
     localparam
-        IDLE      = 2'b00,
-        WRITE_COL = 2'b01,
-        WRITE_ROW = 2'b10,
-        WRITE_KEY = 2'b11;
+        IDLE      = 3'b000,
+        WRITE_COL = 3'b001,
+        WRITE_ROW = 3'b010,
+        WRITE_KEY = 3'b011,
+        ROW_RST   = 3'b100;
 
 
     wire sync_sr_rst, sync_sr;
     wire sync_key_rst, sync_key;
-    wire col_wr, row_wr, key_wr;
-    wire col_rdy, row_rdy, key_rdy;
+    wire col_wr, row_wr, key_wr, row_rst;
+    wire col_rdy, row_rdy, key_rdy, row_rst_rdy;
     reg [2:0] state, state_next;
 
         
@@ -94,6 +97,17 @@ module chip_driver
         .o_ready ( key_rdy     )
     );
 
+    sync_write row_sync_reset(
+        .clk     ( clk         ),
+        .rst     ( rst         ),
+        .i_write ( row_rst     ),
+        .i_data  ( 1'b0        ),
+        .i_sync  ( sync_sr     ),
+        .o_clk   ( o_rst_row   ),
+        .o_data  (             ),
+        .o_ready ( row_rst_rdy )
+    );
+
     //Generador de clock para los registros de desplazamiento
     clock_divider#(
         .NB_DIVIDER (NB_DIVIDER)
@@ -127,6 +141,7 @@ module chip_driver
                 if (i_write_key) state_next = WRITE_KEY;
                 else if (i_write_col) state_next = WRITE_COL;
                 else if (i_write_row) state_next = WRITE_ROW;
+                else if (i_rst_row) state_next = ROW_RST;
                 else state_next = IDLE;
             WRITE_COL: 
                 if (col_rdy) state_next = IDLE;
@@ -137,6 +152,9 @@ module chip_driver
             WRITE_KEY: 
                 if (key_rdy) state_next = IDLE;
                 else state_next = WRITE_KEY;
+            ROW_RST:
+                if( row_rst_rdy ) state_next = IDLE;
+                else state_next = ROW_RST;
             default: 
                 state_next = IDLE;
         endcase
@@ -147,7 +165,7 @@ module chip_driver
     assign key_wr = (state == IDLE) && i_write_key;
     assign col_wr = (state == IDLE) && i_write_col;
     assign row_wr = (state == IDLE) && i_write_row;
-
+    assign row_rst = (state == IDLE) &&  i_rst_row;
 
     assign o_rdy  = (state == IDLE);// && (state_next == IDLE);
 

@@ -14,9 +14,9 @@
 `define FREQ_DIV_SR  24'h0F_FFFF
 `define FREQ_DIV_KEY 24'hFF_FFFF
 
-`define SIM 1'b1
-`define VIO_DEBUG 1'b0
-`define ILA_DEBUG 1'b0
+`define SIM 1'b0
+`define VIO_DEBUG 1'b1
+`define ILA_DEBUG 1'b1
 
 module top #(
     COLS =    `COLS,

@@ -87,7 +87,9 @@ module scan_fsm
     output [6:0] o_col_reg_data,
     output o_col_reg_write,
 
-    output o_key_write
+    output o_key_write,
+
+    output o_row_rst
 
 );
 
@@ -106,10 +108,10 @@ module scan_fsm
     //ROM de palabras de configuracion
     reg [6:0] cfg_word [3:0]; 
     initial begin
-        cfg_word[2'b00] = 7'b0001100;
-        cfg_word[2'b01] = 7'b0001101;
-        cfg_word[2'b10] = 7'b0001000;
-        cfg_word[2'b11] = 7'b0011000;
+        cfg_word[2'b00] = 7'b0001000;
+        cfg_word[2'b01] = 7'b0001100;
+        cfg_word[2'b10] = 7'b0011100;
+        cfg_word[2'b11] = 7'b0011101;
     end
 
 /* FSM */
@@ -143,7 +145,12 @@ module scan_fsm
         STATE_CLEAN_COL_REG_WAIT      = 22,
         STATE_CLEAN_PIXELS            = 23,
         STATE_CLEAN_PIXELS_WAIT       = 24,
-        STATE_DONE                    = 25;
+        STATE_RESET_ROW               = 25,
+        STATE_RESET_ROW_WAIT          = 26,
+        STATE_RESET_ROW_0             = 27,
+        STATE_RESET_ROW_WAIT_0         = 28,
+
+        STATE_DONE                    = 29;
         
 
     /*    MEMORIA    */
@@ -225,8 +232,15 @@ module scan_fsm
             state_next = STATE_CLEAN_PIXELS_WAIT;
         end
         STATE_CLEAN_PIXELS_WAIT: begin
-            if(i_key_rdy) state_next = STATE_RAM_COL_INC;
+            if(i_key_rdy) state_next = STATE_RESET_ROW;
             else          state_next = STATE_CLEAN_PIXELS_WAIT; 
+        end
+        STATE_RESET_ROW: begin
+            state_next = STATE_RESET_ROW_WAIT;
+        end
+        STATE_RESET_ROW_WAIT: begin
+            if(i_row_rdy) state_next = STATE_RAM_COL_INC;
+            else          state_next = STATE_RESET_ROW_WAIT;
         end
         STATE_RAM_COL_INC : begin
             if(i_col_overflow)   state_next = STATE_COL_NEXT_CFG_WORD;
@@ -275,19 +289,19 @@ module scan_fsm
         case(cfg_cnt)
         2'b00:begin
             offset_row = `COUNTER_NO_CHANGE;
+            offset_col = `COUNTER_INC_1;
+        end 
+        2'b01:begin
+            offset_row = `COUNTER_NO_CHANGE;
             offset_col = `COUNTER_NO_CHANGE;
         end
-        2'b01:begin
-            offset_row = `COUNTER_INC_1;
-            offset_col = `COUNTER_NO_CHANGE;
-        end 
         2'b10:begin
-            offset_row = `COUNTER_NO_CHANGE;
+            offset_row = `COUNTER_INC_1;
             offset_col = `COUNTER_INC_1;
         end 
         2'b11:begin
             offset_row = `COUNTER_INC_1;
-            offset_col = `COUNTER_INC_1;
+            offset_col = `COUNTER_NO_CHANGE;
         end 
         endcase
     end
@@ -335,6 +349,7 @@ module scan_fsm
     assign o_row_reg_data  = (state == STATE_ROW_WRITE_1);
     assign o_row_reg_write = (state == STATE_ROW_WRITE_1) || (state == STATE_ROW_WRITE_0_0) || (state == STATE_ROW_WRITE_0_1);
     assign o_key_write     = (state == STATE_PIXELS_WRITE) || (state == STATE_CLEAN_PIXELS);
+    assign o_row_rst       = (state == STATE_RESET_ROW) || (state == STATE_RESET_ROW_0);
     assign o_ram_write     = (state == STATE_RAM_WRITE);
     assign o_adc_trig      = (state == STATE_ADC_TRIGGER);
     assign o_scan_ready    = (state == STATE_DONE);

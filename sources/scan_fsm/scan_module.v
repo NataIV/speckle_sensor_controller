@@ -37,7 +37,9 @@ module scan_module
     output o_col_reg_data,
     output o_col_reg_write,
 
-    output o_key_write
+    output o_key_write,
+
+    output o_row_rst
 
 );
     localparam MEM_DEPTH   = PIXEL_N_ROWS * PIXEL_N_COLS;
@@ -75,7 +77,8 @@ scan_fsm #(
     .o_row_reg_write                    ( o_row_reg_write                    ),
     .o_col_reg_data                     ( sr_col_data                        ),
     .o_col_reg_write                    ( sr_col_write                       ),
-    .o_key_write                        ( o_key_write                        )
+    .o_key_write                        ( o_key_write                        ),
+    .o_row_rst                          ( o_row_rst                          )
 );
 
 

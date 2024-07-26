@@ -23,6 +23,7 @@ module top_fsm
     input i_scan_col_reg_data,  
     input i_scan_col_reg_write,  
     input i_scan_key_wren,
+    input i_scan_row_rst,
     output reg o_scan_go,    
     
     // Process
@@ -48,20 +49,20 @@ module top_fsm
     output reg [4:0] o_row_control,
 
     // Control de la block ram
-    output reg o_ram_read,
-    output reg o_ram_wren,
-    output reg o_ram_rsta,
-    output reg o_ram_ena,
-    output reg [11:0] o_ram_data,
+    output o_ram_read,
+    output o_ram_wren,
+    output o_ram_rsta,
+    output o_ram_ena,
+    output [11:0] o_ram_data,
     // Control de los drivers
     output reg o_chip_row_ena,
-    output reg o_chip_row_rst,
     output reg o_chip_col_rst,
-    output reg o_row_reg_data,
-    output reg o_row_reg_write,
-    output reg o_col_reg_data ,
-    output reg o_col_reg_write,
-    output reg o_key_wren,
+    output o_row_reg_data,
+    output o_row_reg_write,
+    output o_col_reg_data ,
+    output o_col_reg_write,
+    output o_key_wren,
+    output reg o_row_rst,
     output reg o_done
 );
 
@@ -211,19 +212,9 @@ module top_fsm
             IDLE: begin
                 o_col_control   = 5'b10000;
                 o_row_control   = 5'b10000;
-                o_ram_read      = 1'b0;
-                o_ram_wren      = 1'b0;
-                o_ram_data      = 1'b0;
-                o_ram_rsta      = 1'b1;
-                o_ram_ena       = 1'b0;
                 o_chip_row_ena  = 1'b0;
-                o_chip_row_rst  = 1'b1;
+                o_row_rst       = 1'b0;
                 o_chip_col_rst  = 1'b1;
-                o_row_reg_data  = 1'b0;
-                o_row_reg_write = 1'b0;
-                o_col_reg_data  = 1'b0;
-                o_col_reg_write = 1'b0;
-                o_key_wren      = 1'b0;
                 o_done          = 1'b1;
                 o_scan_go       = 1'b0;
                 o_process_go    = 1'b0;
@@ -232,19 +223,9 @@ module top_fsm
             RESET: begin
                 o_col_control   = i_cfg_col_control  ;
                 o_row_control   = i_cfg_row_control  ;
-                o_ram_read      = i_cfg_ram_read     ;
-                o_ram_wren      = 1'b0               ;
-                o_ram_data      = 0                  ;
-                o_ram_rsta      = 1'b1;
-                o_ram_ena       = 1'b0;
                 o_chip_row_ena  = 1'b1               ;
-                o_chip_row_rst  = 1'b0               ;
+                o_row_rst  = 1'b0               ;
                 o_chip_col_rst  = 1'b0               ;
-                o_row_reg_data  = i_cfg_row_reg_data ;
-                o_row_reg_write = i_cfg_row_reg_write;
-                o_col_reg_data  = i_cfg_col_reg_data ;
-                o_col_reg_write = i_cfg_col_reg_write;
-                o_key_wren      = i_cfg_key_wren     ;
                 o_done          = 1'b0               ;
                 o_scan_go       = 1'b0;
                 o_process_go    = 1'b0;
@@ -253,19 +234,9 @@ module top_fsm
             SCAN: begin
                 o_col_control   = i_scan_col_control  ;
                 o_row_control   = i_scan_row_control  ;
-                o_ram_read      = 1'b0                ;
-                o_ram_wren      = i_scan_ram_wren     ;
-                o_ram_data      = i_scan_ram_data     ;
-                o_ram_rsta      = 1'b0;
-                o_ram_ena       = 1'b1;
                 o_chip_row_ena  = 1'b1                ;
-                o_chip_row_rst  = 1'b0                ;
+                o_row_rst  = i_scan_row_rst      ;
                 o_chip_col_rst  = 1'b0                ;
-                o_row_reg_data  = i_scan_row_reg_data ;
-                o_row_reg_write = i_scan_row_reg_write;
-                o_col_reg_data  = i_scan_col_reg_data ;
-                o_col_reg_write = i_scan_col_reg_write;
-                o_key_wren      = i_scan_key_wren     ;
                 o_done          = 1'b0                ;
                 o_scan_go       = 1'b1;
                 o_process_go    = 1'b0;
@@ -274,19 +245,9 @@ module top_fsm
             PROCESS: begin
                 o_col_control   = i_process_col_control  ;
                 o_row_control   = i_process_row_control  ;
-                o_ram_read      = 1'b1                   ;
-                o_ram_wren      = i_process_ram_wren     ;
-                o_ram_data      = i_process_ram_data     ;
-                o_ram_rsta      = 1'b0;
-                o_ram_ena       = 1'b1;
                 o_chip_row_ena  = 1'b0                   ;
-                o_chip_row_rst  = 1'b1                   ;
+                o_row_rst  = 1'b0                   ;
                 o_chip_col_rst  = 1'b1                   ;
-                o_row_reg_data  = 1'b0                   ;
-                o_row_reg_write = 1'b0                   ;
-                o_col_reg_data  = 1'b0                   ;
-                o_col_reg_write = 1'b0                   ;
-                o_key_wren      = 1'b0                   ;
                 o_done          = 1'b0                   ;
                 o_scan_go       = 1'b0;
                 o_process_go    = 1'b1;
@@ -295,19 +256,9 @@ module top_fsm
             CONF: begin
                 o_col_control   = i_cfg_col_control  ;
                 o_row_control   = i_cfg_row_control  ;
-                o_ram_read      = i_cfg_ram_read     ;
-                o_ram_wren      = 1'b0               ;
-                o_ram_data      = 0                  ;
-                o_ram_rsta      = 1'b0               ;
-                o_ram_ena       = 1'b1               ;
                 o_chip_row_ena  = 1'b1               ;
-                o_chip_row_rst  = 1'b0               ;
+                o_row_rst  = 1'b0               ;
                 o_chip_col_rst  = 1'b0               ;
-                o_row_reg_data  = i_cfg_row_reg_data ;
-                o_row_reg_write = i_cfg_row_reg_write;
-                o_col_reg_data  = i_cfg_col_reg_data ;
-                o_col_reg_write = i_cfg_col_reg_write;
-                o_key_wren      = i_cfg_key_wren     ;
                 o_done          = 1'b0               ;
                 o_scan_go       = 1'b0;
                 o_process_go    = 1'b0;
@@ -316,19 +267,9 @@ module top_fsm
             default: begin
                 o_col_control   = 5'b10000;
                 o_row_control   = 5'b10000;
-                o_ram_read      = 1'b0;
-                o_ram_wren      = 1'b0;
-                o_ram_data      = 1'b0;
-                o_ram_rsta      = 1'b1;
-                o_ram_ena       = 1'b0;
                 o_chip_row_ena  = 1'b0;
-                o_chip_row_rst  = 1'b1;
+                o_row_rst  = 1'b1;
                 o_chip_col_rst  = 1'b1;
-                o_row_reg_data  = 1'b0;
-                o_row_reg_write = 1'b0;
-                o_col_reg_data  = 1'b0;
-                o_col_reg_write = 1'b0;
-                o_key_wren      = 1'b0;
                 o_done          = 1'b0;
                 o_scan_go       = 1'b0;
                 o_process_go    = 1'b0;
@@ -337,8 +278,18 @@ module top_fsm
         endcase
     end
 
+    assign o_ram_read   = i_cfg_ram_read | (sel_fsm == PROCESS);
+    assign o_ram_wren   = i_process_ram_wren | i_scan_ram_wren;
+    assign o_ram_data   = i_process_ram_data | i_scan_ram_data;
+    assign o_ram_rsta   = (sel_fsm == IDLE) | (sel_fsm == RESET);
+    assign o_ram_ena    = (sel_fsm == CONF) | (sel_fsm == PROCESS) | (sel_fsm == SCAN);
 
-    
+    assign o_row_reg_data  = i_cfg_row_reg_data  | i_scan_row_reg_data ;
+    assign o_row_reg_write = i_cfg_row_reg_write | i_scan_row_reg_write;
+    assign o_col_reg_data  = i_cfg_col_reg_data  | i_scan_col_reg_data ;
+    assign o_col_reg_write = i_cfg_col_reg_write | i_scan_col_reg_write;
+    assign o_key_wren      = i_cfg_key_wren      | i_scan_key_wren     ;
+
     //OUTPUT LOGIC MEALY
     // assign o_scan_go    = (next_state ==  MODE_001) || (next_state ==  MODE_011) || (next_state ==  MODE_111);
     // assign o_process_go = (next_state ==  MODE_010) || (next_state ==  MODE_110);

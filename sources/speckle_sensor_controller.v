@@ -65,6 +65,8 @@ wire to_chip_driver_i_write_key;
 wire to_chip_driver_i_write_col;
 wire to_chip_driver_i_write_row;
 
+wire to_chip_driver_i_rst_row;
+
 wire from_chip_driver_o_rdy;
 
 
@@ -106,6 +108,7 @@ wire from_scan_fsm_row_reg_write ;
 wire from_scan_fsm_col_reg_data  ;
 wire from_scan_fsm_col_reg_write ;
 wire from_scan_fsm_key_write     ;
+wire from_scan_fsm_row_rst;
 
 // PROCESS FSM SINGAN DECLARATIONS
 wire to_process_fsm_start        ;
@@ -197,6 +200,7 @@ chip_driver u_chip_driver (
     .i_write_row   ( to_chip_driver_i_write_row  ),
     .i_data_col    ( to_chip_driver_i_data_col   ),
     .i_data_row    ( to_chip_driver_i_data_row   ),
+    .i_rst_row     ( to_chip_driver_i_rst_row    ),
     //.i_clk_div_sr  ( to_chip_driver_i_clk_div_sr ),
     //.i_clk_div_key ( to_chip_driver_i_clk_div_key),
     .i_clk_div_sr  ( i_clk_div_sr                ),
@@ -206,6 +210,7 @@ chip_driver u_chip_driver (
     .o_data_col    ( o_chip_col_data             ),
     .o_data_row    ( o_chip_row_data             ),
     .o_write_key   ( o_chip_key_wren             ),
+    .o_rst_row     ( o_chip_row_rst              ),
     .o_sync        (                             ),
     .o_rdy         ( from_chip_driver_o_rdy      )
 );
@@ -225,9 +230,6 @@ scan_module#(
         .i_adc_done                     ( to_scan_fsm_adc_done               ),
         .i_row_overflow                 ( to_scan_fsm_row_overflow           ),
         .i_col_overflow                 ( to_scan_fsm_col_overflow           ),
-        //.i_row_rdy                      ( to_scan_fsm_row_rdy                ),
-        //.i_col_rdy                      ( to_scan_fsm_col_rdy                ),
-        //.i_key_rdy                      ( to_scan_fsm_key_rdy                ),
         .i_chip_rdy                     ( to_scan_fsm_chip_rdy               ),
         .o_scan_ready                   ( from_scan_fsm_scan_ready           ),
         .o_ram_write                    ( from_scan_fsm_ram_wren             ),
@@ -238,7 +240,8 @@ scan_module#(
         .o_row_reg_write                ( from_scan_fsm_row_reg_write        ),
         .o_col_reg_data                 ( from_scan_fsm_col_reg_data         ),
         .o_col_reg_write                ( from_scan_fsm_col_reg_write        ),
-        .o_key_write                    ( from_scan_fsm_key_write            )
+        .o_key_write                    ( from_scan_fsm_key_write            ),
+        .o_row_rst                      ( from_scan_fsm_row_rst              )
 );
 
 
@@ -392,6 +395,7 @@ top_fsm u_top_fsm(
     .i_scan_col_reg_data   ( from_scan_fsm_col_reg_data   ),
     .i_scan_col_reg_write  ( from_scan_fsm_col_reg_write  ),
     .i_scan_key_wren       ( from_scan_fsm_key_write      ),
+    .i_scan_row_rst        ( from_scan_fsm_row_rst        ),
 
     /*             ENTRADAS DE PROCESAMIENTO              */
     .i_signal_process_end  ( from_process_fsm_rdy         ),
@@ -423,7 +427,7 @@ top_fsm u_top_fsm(
     .o_ram_rsta            ( to_ram_rsta                  ),
     .o_ram_ena             ( to_ram_ena                   ),
     .o_chip_row_ena        ( o_chip_row_ena               ),
-    .o_chip_row_rst        ( o_chip_row_rst               ),
+    .o_row_rst             ( to_chip_driver_i_rst_row     ),
     .o_chip_col_rst        ( o_chip_col_rst               ),
     .o_row_reg_data        ( to_chip_driver_i_data_row    ),
     .o_row_reg_write       ( to_chip_driver_i_write_row   ),
