@@ -161,7 +161,7 @@ module process_fsm
             if ( state == SAVE_PIX_1 ) begin
                pix_1 <= i_ram_value;
             end
-            else if (state == SAVE_PIX_1)  begin
+            else if (state == SAVE_PIX_2)  begin
                pix_2 <= i_ram_value;
             end 
             else if (state == SUBS) begin
@@ -171,12 +171,8 @@ module process_fsm
     end
 
     /*    Control del direccionamiento de memoria    */
-    always@(posedge clk)begin
-        if(rst)begin
-            o_row_control = `COUNTER_RESET;
-            o_col_control = `COUNTER_RESET;
-        end else begin
-            case(state_next)
+    always@(*)begin
+            case(state)
             IDLE           : begin
                 o_row_control = `COUNTER_RESET;
                 o_col_control = `COUNTER_RESET;
@@ -218,7 +214,6 @@ module process_fsm
                 o_col_control = `COUNTER_NO_CHANGE;
             end
             endcase
-        end
     end
 
 
@@ -268,20 +263,20 @@ module process_fsm
         row_control_load_gp_1[0] <= `COUNTER_INC_1;
         col_control_load_gp_1[0] <= `COUNTER_NO_CHANGE;
 
-        row_control_load_gp_1[1] <= `COUNTER_NO_CHANGE;
-        col_control_load_gp_1[1] <= `COUNTER_NO_CHANGE;
-
-        row_control_load_gp_1[2] <= `COUNTER_INC_1;
-        col_control_load_gp_1[2] <= `COUNTER_INC_1;
+        row_control_load_gp_1[1] <= `COUNTER_INC_1;
+        col_control_load_gp_1[1] <= `COUNTER_INC_1;
+        
+        row_control_load_gp_1[2] <= `COUNTER_NO_CHANGE;
+        col_control_load_gp_1[2] <= `COUNTER_NO_CHANGE;
     end
     
     
     initial begin
-        row_control_load_gp_2[0] <= `COUNTER_NO_CHANGE;
-        col_control_load_gp_2[0] <= `COUNTER_NO_CHANGE;
+        row_control_load_gp_2[0] <= `COUNTER_INC_1;
+        col_control_load_gp_2[0] <= `COUNTER_INC_1;
 
         row_control_load_gp_2[1] <= `COUNTER_NO_CHANGE;
-        col_control_load_gp_2[1] <= `COUNTER_INC_1;
+        col_control_load_gp_2[1] <= `COUNTER_NO_CHANGE;
 
         row_control_load_gp_2[2] <= `COUNTER_NO_CHANGE;
         col_control_load_gp_2[2] <= `COUNTER_INC_1;

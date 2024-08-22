@@ -280,7 +280,7 @@ module top_fsm
 
     assign o_ram_read   = i_cfg_ram_read | (sel_fsm == PROCESS);
     assign o_ram_wren   = i_process_ram_wren | i_scan_ram_wren;
-    assign o_ram_data   = i_process_ram_data | i_scan_ram_data;
+    assign o_ram_data   = (sel_fsm == PROCESS) ? i_process_ram_data : i_scan_ram_data;
     assign o_ram_rsta   = (sel_fsm == IDLE) | (sel_fsm == RESET);
     assign o_ram_ena    = (sel_fsm == CONF) | (sel_fsm == PROCESS) | (sel_fsm == SCAN);
 

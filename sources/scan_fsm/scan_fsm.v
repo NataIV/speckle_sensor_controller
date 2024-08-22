@@ -46,6 +46,8 @@
             */
 //! 
 
+//`define INCREMENTAL_SCAN
+
 `include "cfg_word_sr.v"
 `include "../counter_offset/counter_offset.v"
 
@@ -149,7 +151,6 @@ module scan_fsm
         STATE_RESET_ROW_WAIT          = 26,
         STATE_RESET_ROW_0             = 27,
         STATE_RESET_ROW_WAIT_0         = 28,
-
         STATE_DONE                    = 29;
         
 
@@ -346,7 +347,6 @@ module scan_fsm
 /*    LOGICA DE SALIDA    */
     assign o_col_reg_write = (state == STATE_COL_WRITE_CFG_WORD) || (state == STATE_COL_WRITE_0000000) || (state == STATE_CLEAN_COL_REG);
     assign o_col_reg_data  = (state == STATE_COL_WRITE_CFG_WORD) ? cfg_word[cfg_cnt] : 7'b0000000;
-    assign o_row_reg_data  = (state == STATE_ROW_WRITE_1);
     assign o_row_reg_write = (state == STATE_ROW_WRITE_1) || (state == STATE_ROW_WRITE_0_0) || (state == STATE_ROW_WRITE_0_1);
     assign o_key_write     = (state == STATE_PIXELS_WRITE) || (state == STATE_CLEAN_PIXELS);
     assign o_row_rst       = (state == STATE_RESET_ROW) || (state == STATE_RESET_ROW_0);
@@ -354,6 +354,11 @@ module scan_fsm
     assign o_adc_trig      = (state == STATE_ADC_TRIGGER);
     assign o_scan_ready    = (state == STATE_DONE);
 
+`ifdef INCREMENTAL_SCAN
+    assign o_row_reg_data  = (state == STATE_ROW_WRITE_1) || (state == STATE_ROW_WRITE_0_1); // Para encender de manera incremental
+`else
+    assign o_row_reg_data  = (state == STATE_ROW_WRITE_1);
+`endif
     
 endmodule
 
