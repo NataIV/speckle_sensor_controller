@@ -75,9 +75,16 @@ wire [23:0] ssc_clk_div_key;
 wire [11:0] ssc_umbral;
 
 
+wire ram_dbg;
+wire [11:0] ram_out_reg;
+wire [9:0]  ram_dbg_addr;
+wire [11:0] ram_dbg_input = 0;
+wire [31:0] ram_ctrl_reg = {ram_dbg, ~ram_dbg, ram_dbg, ~ram_dbg, ram_dbg, ram_dbg_addr, ram_dbg_input};
+
+
 assign adc_result = do_out[15-:NB_DATA];
 
-speckle_sensor_controller#(
+speckle_sensor_controller_pl_only#(
     .COLS                         ( `COLS                        ),
     .ROWS                         ( `ROWS                        ),
     .NB_DATA                      ( `NB_DATA                     )
@@ -86,6 +93,8 @@ speckle_sensor_controller#(
     .sw                           ( sw                           ),
     .btn                          ( btn                          ),
     .led                          ( led                          ),
+    .i_ram_ctrl_reg               ( ram_ctrl_reg                 ),
+    .o_ram_out_reg                ( ram_out_reg                  ),
     .i_umbral                     ( ssc_umbral                   ),
     .i_clk_div_sr                 ( ssc_clk_div_sr               ),
     .i_clk_div_key                ( ssc_clk_div_key              ),
@@ -123,17 +132,6 @@ adc adc_i(
 );
 
 
-
-
-
-
-// clock_scaler
-//     u_clock_scaler
-//     (   .clk_in1_0 (clk),
-//         .clk_out1_0 (clk),
-//         .locked_0 (),
-//         .reset_0 (1'b0));
-
 generate
     if (`SIM) begin
         // para debug uso valores default o definidos en el testbench
@@ -155,13 +153,13 @@ generate
             (.clk(clk),
             .key_clk_div(vio_key_clk_div),
             .ram_address(vio_ram_address),
-            .ram_output(vio_ram_output),
+            .ram_output(ram_out_reg),
             .sr_clk_div(vio_sr_clk_div),
             .umbral(vio_umbral),
             .xadc_output(vio_xadc_output));
 
-        assign vio_ram_address = u_speckle_sensor_controller.to_ram_addr;
-        assign vio_ram_output = u_speckle_sensor_controller.from_ram_data_out;
+        //assign vio_ram_address = u_speckle_sensor_controller.to_ram_addr;
+        //assign vio_ram_output = u_speckle_sensor_controller.from_ram_data_out;
         assign vio_xadc_output = adc_result;
 
         assign ssc_clk_div_sr  = vio_sr_clk_div;
@@ -175,6 +173,23 @@ generate
     end
 endgenerate       
 
+
+
+
+ila_ram_scan dbg_ram
+(
+    .clk(clk),
+    .rst(rst),
+    .i_start_scan(btn[3]),
+    .o_ram_addr(ram_dbg_addr),
+    .o_ram_dbg(ram_dbg)
+);
+
+ila_bram_debug u_ila (   
+    .clk(clk),
+    .data(ram_out_reg),
+    .trigger(ram_dbg)
+);
 
 // Salidas Para Debug
 

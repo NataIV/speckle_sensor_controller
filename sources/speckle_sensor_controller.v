@@ -12,6 +12,7 @@
 `include "scan_fsm/cfg_word_sr.v"
 `include "process_fsm/process_fsm.v"
 `include "ram/ila_ram_scan.v"
+`include "filter/avg.v"
 
 `define CLOCK_FREQ 125_000_000
 `define WRITE_FREQ       1_000
@@ -28,33 +29,59 @@ module speckle_sensor_controller #(
 (
     input clk,
 
-    input  [3:0] sw,
-    input  [3:0] btn,
-    output [3:0] led,
+    output [31:0] o_status,
+    input  [31:0] i_optreg,
 
-    input [NB_DATA-1:0] i_adc_val,
+    input  [31:0] i_ram_ctrl_reg,
+    // | ram_ext_debug| ram_ena | ram_rst | ram_read | ram_wren | ram_address | ram_input |
+    //        26          25        24         23         22         21-12        11-0
+
+    output [31:0] o_ram_out_reg,
+
+    input  [NB_DATA-1:0] i_adc_val,
     input  i_adc_done,
 
-    input [NB_DATA-1:0] i_umbral,
+    input  [NB_DATA-1:0] i_umbral,
 
     input  [`NB_FREQ_DIV-1:0] i_clk_div_sr,
     input  [`NB_FREQ_DIV-1:0] i_clk_div_key,
 
     output o_adc_trigger,
     
-    output o_chip_key_wren,
-
-    output o_chip_col_clk,
-    output o_chip_col_rst,
-    output o_chip_col_data,
-    
-    output o_chip_row_clk,
-    output o_chip_row_rst,
-    output o_chip_row_ena,
-    output o_chip_row_data
+    output [7:0] o_chip_signals
 );
 
-    localparam RAM_DEPTH = COLS * ROWS;
+// CONEXIONES SALIDAS Y ENTRADAS A VECTORES
+
+wire chip_key_wren;
+wire chip_col_clk;
+wire chip_col_rst;
+wire chip_col_data;
+wire chip_row_clk;
+wire chip_row_rst;
+wire chip_row_ena;
+wire chip_row_data;
+
+
+assign o_chip_signals = {
+    chip_key_wren,
+    chip_col_clk,
+    chip_col_rst,
+    chip_col_data,
+    chip_row_clk,
+    chip_row_rst,
+    chip_row_ena,
+    chip_row_data
+};
+
+
+localparam MODE_OFFSET  = 7; // REEMPLAZAN LOS SW
+localparam MODE_WIDTH   = 4;
+localparam OPT_READMEM  = 2; // REEMPLAZAN BOTONES
+localparam OPT_START    = 1;
+localparam OPT_RST      = 0;
+
+localparam RAM_DEPTH = COLS * ROWS;
 
 wire rst;
 
@@ -72,7 +99,7 @@ wire from_chip_driver_o_rdy;
 
 // CONFIGURATION FSM SIGNAL DECLARATIONS
 wire to_cfg_fsm_start              ;
-wire [NB_DATA-1:0] to_cfg_fsm_i_ram_data        ;
+wire [NB_DATA-1:0] to_cfg_fsm_i_ram_data ;
 wire to_cfg_fsm_i_row_overflow    ;
 wire to_cfg_fsm_i_col_overflow    ;
 wire to_cfg_fsm_i_col_is_even     ;
@@ -152,10 +179,10 @@ wire to_ram_ena;
 
 /*--------------------------- CONNECTIONS ------------------------------*/
 // Input signals connections
-assign rst  = btn[0];//
-assign to_top_fsm_start = btn[1];
+assign rst  = i_optreg[OPT_RST]; //
+assign to_top_fsm_start = i_optreg[OPT_START];
 assign to_top_fsm_scan_ram_data = i_adc_val;
-assign to_top_fsm_select_mode   = sw;
+assign to_top_fsm_select_mode   = i_optreg[MODE_OFFSET-:MODE_WIDTH];
 
 
 // ---- RAM
@@ -205,12 +232,12 @@ chip_driver u_chip_driver (
     //.i_clk_div_key ( to_chip_driver_i_clk_div_key),
     .i_clk_div_sr  ( i_clk_div_sr                ),
     .i_clk_div_key ( i_clk_div_key               ),
-    .o_clk_col     ( o_chip_col_clk              ),
-    .o_clk_row     ( o_chip_row_clk              ),
-    .o_data_col    ( o_chip_col_data             ),
-    .o_data_row    ( o_chip_row_data             ),
-    .o_write_key   ( o_chip_key_wren             ),
-    .o_rst_row     ( o_chip_row_rst              ),
+    .o_clk_col     ( chip_col_clk                ),
+    .o_clk_row     ( chip_row_clk                ),
+    .o_data_col    ( chip_col_data               ),
+    .o_data_row    ( chip_row_data               ),
+    .o_write_key   ( chip_key_wren               ),
+    .o_rst_row     ( chip_row_rst                ),
     .o_sync        (                             ),
     .o_rdy         ( from_chip_driver_o_rdy      )
 );
@@ -308,72 +335,40 @@ counter_offset#(
     .overflow            ( from_cnt_row_overflow )
 );
 
-generate
-    if (`BRAM_DEBUG) begin
-        wire [$clog2(RAM_DEPTH)-1:0] ram_dbg_addr;
-        wire ram_dbg;
 
-        wire [$clog2(RAM_DEPTH)-1:0] _to_ram_addr = (ram_dbg) ? ram_dbg_addr : to_ram_addr;     
-        wire _to_ram_wren     = to_ram_wren & ~ram_dbg; 
-        wire _to_ram_ena      = to_ram_ena | ram_dbg;   
-        wire _to_ram_rsta     = to_ram_rsta & ~ram_dbg;  
-        wire _to_ram_read     = to_ram_read | ram_dbg; 
-        // BRAM instantiation
-        xilinx_single_port_ram_no_change #(
-            .RAM_WIDTH(NB_DATA),                       // Specify RAM data width
-            .RAM_DEPTH(RAM_DEPTH),                     // Specify RAM depth (number of entries)
-            .RAM_PERFORMANCE("HIGH_PERFORMANCE"),      // Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
-            .INIT_FILE(INIT_FILE)                      // Specify name/location of RAM initialization file if using one (leave blank if not)
-        ) ram (
-            .addra(_to_ram_addr),         // Address bus, width determined from RAM_DEPTH
-            .dina(to_ram_data_in),       // RAM input data, width determined from RAM_WIDTH
-            .clka(clk),                  // Clock
-            .wea(_to_ram_wren),           // Write enable
-            .ena(_to_ram_ena),            // RAM Enable, for additional power savings, disable port when not in use
-            .rsta(_to_ram_rsta),          // Output reset (does not affect memory contents)
-            //.rsta(1'b1),          // Output reset (does not affect memory contents)
-            .regcea(_to_ram_read),        // Output register enable
-            //.regcea(1'b0),        // Output register enable
-            .douta(__from_ram_data_out)  // RAM output data, width determined from RAM_WIDTH
-        );
-        //////////////////////////////////////////// DEBUG PARA LA RAM
+wire [$clog2(RAM_DEPTH)-1:0] ram_dbg_addr = i_ram_ctrl_reg[21:12];
+wire ram_dbg = i_ram_ctrl_reg[26];
 
-        ila_ram_scan dbg_ram
-        (
-            .clk(clk),
-            .rst(rst),
-            .i_start_scan(btn[3]),
-            .o_ram_addr(ram_dbg_addr),
-            .o_ram_dbg(ram_dbg)
-        );
+wire [$clog2(RAM_DEPTH)-1:0] _to_ram_addr = (ram_dbg) ? ram_dbg_addr : to_ram_addr;     
+wire _to_ram_ena      = (ram_dbg) ? to_ram_ena  : i_ram_ctrl_reg[25];   
+wire _to_ram_rsta     = (ram_dbg) ? to_ram_rsta : i_ram_ctrl_reg[24];  
+wire _to_ram_read     = (ram_dbg) ? to_ram_read : i_ram_ctrl_reg[23]; 
+wire _to_ram_wren     = (ram_dbg) ? to_ram_wren : i_ram_ctrl_reg[22]; 
 
-        ila_bram_debug u_ila (   
-            .clk(clk),
-            .data(__from_ram_data_out),
-            .trigger(ram_dbg)
-        );
+// BRAM instantiation
+xilinx_single_port_ram_no_change #(
+    .RAM_WIDTH(NB_DATA),                       // Specify RAM data width
+    .RAM_DEPTH(RAM_DEPTH),                     // Specify RAM depth (number of entries)
+    .RAM_PERFORMANCE("HIGH_PERFORMANCE"),      // Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
+    .INIT_FILE(INIT_FILE)                      // Specify name/location of RAM initialization file if using one (leave blank if not)
+) ram (
+    .addra(_to_ram_addr),         // Address bus, width determined from RAM_DEPTH
+    .dina(to_ram_data_in),       // RAM input data, width determined from RAM_WIDTH
+    .clka(clk),                  // Clock
+    .wea(_to_ram_wren),           // Write enable
+    .ena(_to_ram_ena),            // RAM Enable, for additional power savings, disable port when not in use
+    .rsta(_to_ram_rsta),          // Output reset (does not affect memory contents)
+    //.rsta(1'b1),                // Output reset (does not affect memory contents)
+    .regcea(_to_ram_read),        // Output register enable
+    //.regcea(1'b0),              // Output register enable
+    .douta(__from_ram_data_out)  // RAM output data, width determined from RAM_WIDTH
+);
 
-    end else begin
-            // BRAM instantiation
-        xilinx_single_port_ram_no_change #(
-            .RAM_WIDTH(NB_DATA),                       // Specify RAM data width
-            .RAM_DEPTH(RAM_DEPTH),                     // Specify RAM depth (number of entries)
-            .RAM_PERFORMANCE("HIGH_PERFORMANCE"),      // Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
-            .INIT_FILE(INIT_FILE)                      // Specify name/location of RAM initialization file if using one (leave blank if not)
-        ) ram (
-            .addra(to_ram_addr),         // Address bus, width determined from RAM_DEPTH
-            .dina(to_ram_data_in),       // RAM input data, width determined from RAM_WIDTH
-            .clka(clk),                  // Clock
-            .wea(to_ram_wren),           // Write enable
-            .ena(to_ram_ena),            // RAM Enable, for additional power savings, disable port when not in use
-            .rsta(to_ram_rsta),          // Output reset (does not affect memory contents)
-            //.rsta(1'b1),          // Output reset (does not affect memory contents)
-            .regcea(to_ram_read),        // Output register enable
-            //.regcea(1'b0),        // Output register enable
-            .douta(__from_ram_data_out)  // RAM output data, width determined from RAM_WIDTH
-        );
-    end
-endgenerate
+
+
+
+
+
 
 
 // FSM para separar las conexiones de recursos compartidos
@@ -426,9 +421,9 @@ top_fsm u_top_fsm(
     .o_ram_data            ( to_ram_data_in               ),
     .o_ram_rsta            ( to_ram_rsta                  ),
     .o_ram_ena             ( to_ram_ena                   ),
-    .o_chip_row_ena        ( o_chip_row_ena               ),
+    .o_chip_row_ena        ( chip_row_ena                 ),
     .o_row_rst             ( to_chip_driver_i_rst_row     ),
-    .o_chip_col_rst        ( o_chip_col_rst               ),
+    .o_chip_col_rst        ( chip_col_rst                 ),
     .o_row_reg_data        ( to_chip_driver_i_data_row    ),
     .o_row_reg_write       ( to_chip_driver_i_write_row   ),
     .o_col_reg_data        ( to_chip_driver_i_data_col    ),
@@ -438,16 +433,21 @@ top_fsm u_top_fsm(
 );
 
 
+
+
+
+
 // OUTPUTS
-
-
 assign o_adc_trigger = from_scan_fsm_adc_trig;
 
+assign o_status [12:4] = o_chip_signals;
+assign o_status[3:0] = {
+    to_scan_fsm_start,
+    to_process_fsm_start,
+    to_cfg_fsm_start,
+    from_top_fsm_done
+};
 
-assign led[0] = to_scan_fsm_start;
-assign led[1] = to_process_fsm_start;
-assign led[2] = to_cfg_fsm_start;
-assign led[3] = from_top_fsm_done;
 
 endmodule
 
