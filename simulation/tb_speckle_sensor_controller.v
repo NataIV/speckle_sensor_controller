@@ -51,8 +51,8 @@ assign btn[1] = start;
 assign btn[2] = 1'b0;
 assign btn[3] = 1'b0;
 
-assign col = uut.from_cnt_col_value;
-assign row = uut.from_cnt_row_value;
+assign col = uut.u_speckle_sensor_controller.from_cnt_col_value;
+assign row = uut.u_speckle_sensor_controller.from_cnt_row_value;
 assign mem_addr = col * 24 + row;
 
 initial clk = 1'b1;
@@ -91,7 +91,7 @@ end
 
 
 
-speckle_sensor_controller#(
+speckle_sensor_controller_pl_only#(
     .COLS ( 4 ),
     .ROWS ( 4 ),
     .NB_DATA ( 12 ),
@@ -101,6 +101,7 @@ speckle_sensor_controller#(
     .sw                           ( selection                    ),
     .btn                          ( btn                          ),
     .led                          ( led                          ),
+    .i_ram_ctrl_reg               ( 0                            ),
     .i_adc_val                    ( i_adc_val                    ),
     .i_adc_done                   ( i_adc_done                   ),
     .i_umbral                     ( 3                            ),

@@ -58,22 +58,12 @@ module top #(
     output o_chip_row_clk_cpy,
     output o_chip_row_data_cpy
 );
-localparam NB_RAM_ADDR = $clog2(COLS*ROWS);
-wire busy_out;
-wire adc_trigger;
-wire [NB_DATA-1:0] adc_result;
-wire adc_done;
-wire [15:0]do_out;
-//wire [15:0]di_in;
-//wire drdy_out;
-//wire dwe_in;
-wire eos;
-//wire vn_in;
-//wire vp_in;
-wire [23:0] ssc_clk_div_sr;
-wire [23:0] ssc_clk_div_key;
-wire [11:0] ssc_umbral;
 
+localparam NB_RAM_ADDR = $clog2(COLS*ROWS);
+
+wire [7:0]  chip_signals;
+wire [31:0] optreg;
+wire [31:0] status;
 
 wire ram_dbg;
 wire [11:0] ram_out_reg;
@@ -82,99 +72,38 @@ wire [11:0] ram_dbg_input = 0;
 wire [31:0] ram_ctrl_reg = {ram_dbg, ~ram_dbg, ram_dbg, ~ram_dbg, ram_dbg, ram_dbg_addr, ram_dbg_input};
 
 
-assign adc_result = do_out[15-:NB_DATA];
+wire [23:0] vio_key_clk_div;
+wire [NB_DATA-1:0] vio_ram_output;
+wire [23:0] vio_sr_clk_div;
+wire [NB_DATA-1:0] vio_umbral;
 
-speckle_sensor_controller_pl_only#(
-    .COLS                         ( `COLS                        ),
-    .ROWS                         ( `ROWS                        ),
-    .NB_DATA                      ( `NB_DATA                     )
-)u_speckle_sensor_controller(
-    .clk                          ( clk                          ),
-    .sw                           ( sw                           ),
-    .btn                          ( btn                          ),
-    .led                          ( led                          ),
-    .i_ram_ctrl_reg               ( ram_ctrl_reg                 ),
-    .o_ram_out_reg                ( ram_out_reg                  ),
-    .i_umbral                     ( ssc_umbral                   ),
-    .i_clk_div_sr                 ( ssc_clk_div_sr               ),
-    .i_clk_div_key                ( ssc_clk_div_key              ),
-    .i_adc_val                    ( adc_result                   ),
-    .i_adc_done                   ( adc_done                     ),
-    .o_adc_trigger                ( adc_trigger                  ),
-    .o_chip_key_wren              ( o_chip_key_wren              ),
-    .o_chip_col_clk               ( o_chip_col_clk               ),
-    .o_chip_col_rst               ( o_chip_col_rst               ),
-    .o_chip_col_data              ( o_chip_col_data              ),
-    .o_chip_row_clk               ( o_chip_row_clk               ),
-    .o_chip_row_rst               ( o_chip_row_rst               ),
-    .o_chip_row_ena               ( o_chip_row_ena               ),
-    .o_chip_row_data              ( o_chip_row_data              )
+speckle_sensor_controller_xadc#(
+    .COLS        ( COLS         ),
+    .ROWS        ( ROWS         ),
+    .NB_DATA     ( NB_DATA      )
+)u_speckle_sensor_controller_xadc(
+    .clk             ( clk              ),
+    .i_optreg        ( optreg           ),
+    .i_ram_ctrl_reg  ( ram_ctrl_reg     ),
+    .i_umbral        ( vio_umbral       ),
+    .i_clk_div_sr    ( vio_sr_clk_div   ),
+    .i_clk_div_key   ( vio_key_clk_div  ),
+    .o_ram_out_reg   ( ram_out_reg      ),
+    .o_status        ( status           ),
+    .vauxn6          ( vauxn6           ),
+    .vauxp6          ( vauxp6           ),
+    .o_chip_signals  ( chip_signals     )
 );
 
-adc adc_i(   
-    .alarm_out                    (                              ),
-    .busy_out                     ( busy_out                     ),
-    .channel_out                  (                              ),
-    .convst_in                    ( adc_trigger                  ),
-    .daddr_in                     ( 6'h16                        ),
-    .dclk_in                      ( clk                          ),
-    .den_in                       ( 1'b1                         ),
-    .di_in                        ( 16'h0000                     ),
-    .do_out                       ( do_out                       ),
-    .drdy_out                     (                              ),
-    .dwe_in                       ( 1'b0                         ),
-    .eoc_out                      ( adc_done                     ),
-    .eos_out                      ( eos                          ),
-    .vauxn6                       ( vauxn6                       ),
-    .vauxp6                       ( vauxp6                       ),
-    .vn_in                        (                              ),
-    .vp_in                        (                              )
+vio vio_i (
+    .clk            ( clk               ),
+    .key_clk_div    ( vio_key_clk_div   ),
+    .ram_address    (    ),
+    .ram_output     ( ram_out_reg       ),
+    .sr_clk_div     ( vio_sr_clk_div    ),
+    .umbral         ( vio_umbral        ),
+    .xadc_output    (    )
 );
-
-
-generate
-    if (`SIM) begin
-        // para debug uso valores default o definidos en el testbench
-        assign ssc_clk_div_sr  = FREQ_DIV_SR;
-        assign ssc_clk_div_key = FREQ_DIV_KEY;
-        assign ssc_umbral = UMBRAL;
-
-    end else if (`VIO_DEBUG) begin
-        // Si este modulo es el modulo superior, instancio el modulo VIO
-
-        wire [23:0] vio_key_clk_div;
-        wire [NB_RAM_ADDR-1:0]  vio_ram_address;
-        wire [NB_DATA-1:0] vio_ram_output;
-        wire [23:0] vio_sr_clk_div;
-        wire [NB_DATA-1:0] vio_umbral;
-        wire [NB_DATA-1:0] vio_xadc_output;
-
-        vio vio_i
-            (.clk(clk),
-            .key_clk_div(vio_key_clk_div),
-            .ram_address(vio_ram_address),
-            .ram_output(ram_out_reg),
-            .sr_clk_div(vio_sr_clk_div),
-            .umbral(vio_umbral),
-            .xadc_output(vio_xadc_output));
-
-        //assign vio_ram_address = u_speckle_sensor_controller.to_ram_addr;
-        //assign vio_ram_output = u_speckle_sensor_controller.from_ram_data_out;
-        assign vio_xadc_output = adc_result;
-
-        assign ssc_clk_div_sr  = vio_sr_clk_div;
-        assign ssc_clk_div_key = vio_key_clk_div;
-        assign ssc_umbral = vio_umbral;
-
-    end else begin
-        assign ssc_clk_div_sr  = FREQ_DIV_SR;
-        assign ssc_clk_div_key = FREQ_DIV_KEY;
-        assign ssc_umbral = UMBRAL;
-    end
-endgenerate       
-
-
-
 
 ila_ram_scan dbg_ram
 (
@@ -191,8 +120,24 @@ ila_bram_debug u_ila (
     .trigger(ram_dbg)
 );
 
-// Salidas Para Debug
 
+// Entradas y salidas
+
+assign optreg[7-:4] = sw ;
+assign optreg[3-:4] = btn;
+assign led = status[3:0];
+
+// Salidas al chip
+assign o_chip_key_wren = chip_signals[7];
+assign o_chip_col_clk  = chip_signals[6];
+assign o_chip_col_rst  = chip_signals[5];
+assign o_chip_col_data = chip_signals[4];
+assign o_chip_row_clk  = chip_signals[3];
+assign o_chip_row_rst  = chip_signals[2];
+assign o_chip_row_ena  = chip_signals[1];
+assign o_chip_row_data = chip_signals[0];
+
+// Salidas Para Debug
 assign o_chip_col_data_cpy = o_chip_col_data;
 assign o_chip_col_rst_cpy =  o_chip_col_rst; 
 assign o_chip_row_ena_cpy =  o_chip_row_ena; 
@@ -201,6 +146,5 @@ assign o_chip_col_clk_cpy =  o_chip_col_clk;
 assign o_chip_key_wren_cpy = o_chip_key_wren;
 assign o_chip_row_clk_cpy =  o_chip_row_clk; 
 assign o_chip_row_data_cpy = o_chip_row_data;
-
 
 endmodule
