@@ -69,13 +69,13 @@ wire ram_dbg;
 wire [11:0] ram_out_reg;
 wire [9:0]  ram_dbg_addr;
 wire [11:0] ram_dbg_input = 0;
-wire [31:0] ram_ctrl_reg = {ram_dbg, ~ram_dbg, ram_dbg, ~ram_dbg, ram_dbg, ram_dbg_addr, ram_dbg_input};
+wire [31:0] ram_ctrl_reg = {ram_dbg, 1'b1, 1'b0, 1'b1, 1'b0, ram_dbg_addr, ram_dbg_input};
 
 
-wire [23:0] vio_key_clk_div;
-wire [NB_DATA-1:0] vio_ram_output;
-wire [23:0] vio_sr_clk_div;
-wire [NB_DATA-1:0] vio_umbral;
+wire [23:0]         vio_key_clk_div;
+wire [NB_DATA-1:0]  vio_ram_output;
+wire [23:0]         vio_sr_clk_div;
+wire [NB_DATA-1:0]  vio_umbral;
 
 speckle_sensor_controller_xadc#(
     .COLS        ( COLS         ),

@@ -11,8 +11,8 @@
 `include "scan_fsm/scan_fsm.v"
 `include "scan_fsm/cfg_word_sr.v"
 `include "process_fsm/process_fsm.v"
-`include "ram/ila_ram_scan.v"
-`include "filter/avg.v"
+//`include "ram/ila_ram_scan.v"
+//`include "filter/avg.v"
 
 `define CLOCK_FREQ 125_000_000
 `define WRITE_FREQ       1_000
@@ -39,14 +39,14 @@ module speckle_sensor_controller #(
     output [31:0] o_ram_out_reg,
 
     input  [NB_DATA-1:0] i_adc_val,
-    input  i_adc_done,
+    input  i_adc_done, //(eoc)
 
     input  [NB_DATA-1:0] i_umbral,
 
     input  [`NB_FREQ_DIV-1:0] i_clk_div_sr,
     input  [`NB_FREQ_DIV-1:0] i_clk_div_key,
 
-    output o_adc_trigger,
+    output o_adc_trigger, 
     
     output [7:0] o_chip_signals
 );
@@ -242,9 +242,6 @@ chip_driver u_chip_driver (
     .o_rdy         ( from_chip_driver_o_rdy      )
 );
 
-
-
-
 // SCAN MODULE INSTANTIATION
 scan_module#(
     .PIXEL_N_ROWS                       ( ROWS                               ),
@@ -340,10 +337,10 @@ wire [$clog2(RAM_DEPTH)-1:0] ram_dbg_addr = i_ram_ctrl_reg[21:12];
 wire ram_dbg = i_ram_ctrl_reg[26];
 
 wire [$clog2(RAM_DEPTH)-1:0] _to_ram_addr = (ram_dbg) ? ram_dbg_addr : to_ram_addr;     
-wire _to_ram_ena      = (ram_dbg) ? to_ram_ena  : i_ram_ctrl_reg[25];   
-wire _to_ram_rsta     = (ram_dbg) ? to_ram_rsta : i_ram_ctrl_reg[24];  
-wire _to_ram_read     = (ram_dbg) ? to_ram_read : i_ram_ctrl_reg[23]; 
-wire _to_ram_wren     = (ram_dbg) ? to_ram_wren : i_ram_ctrl_reg[22]; 
+wire _to_ram_ena      = (!ram_dbg) ? to_ram_ena  : i_ram_ctrl_reg[25];   
+wire _to_ram_rsta     = (!ram_dbg) ? to_ram_rsta : i_ram_ctrl_reg[24];  
+wire _to_ram_read     = (!ram_dbg) ? to_ram_read : i_ram_ctrl_reg[23]; 
+wire _to_ram_wren     = (!ram_dbg) ? to_ram_wren : i_ram_ctrl_reg[22]; 
 
 // BRAM instantiation
 xilinx_single_port_ram_no_change #(
@@ -448,6 +445,8 @@ assign o_status[3:0] = {
     from_top_fsm_done
 };
 
+
+assign o_ram_out_reg[11:0] = from_ram_data_out;
 
 endmodule
 
