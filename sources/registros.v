@@ -1,5 +1,5 @@
-`ifndef SPECKLE_SENSOR_CONTROLLER_H
-`define SPECKLE_SENSOR_CONTROLLER_H
+`ifndef REGISTROS_H
+`define REGISTROS_H
 `timescale 1ns / 1ps
 
 `include "top_level_fsm/top_fsm.v"
@@ -52,6 +52,34 @@ module speckle_sensor_controller #(
     
     output [11:0] o_chip_signals
 );
+
+
+`define CHIP_SIG_REG_LEN 12
+`define CHIP_SIG_BIT_AMP_CLK 11
+`define CHIP_SIG_BIT_AMP_RST 10
+`define CHIP_SIG_BIT_AMP_ENA 9
+`define CHIP_SIG_BIT_AMP_DAT 8
+`define CHIP_SIG_BIT_KEY_WEN 7
+`define CHIP_SIG_BIT_COL_CLK 6
+`define CHIP_SIG_BIT_COL_RST 5
+`define CHIP_SIG_BIT_COL_ENA 4
+`define CHIP_SIG_BIT_COL_DAT 3
+`define CHIP_SIG_BIT_ROW_CLK 2
+`define CHIP_SIG_BIT_ROW_RST 1
+`define CHIP_SIG_BIT_ROW_DAT 0
+wire [CHIP_SIG_REG_LEN-1:0] chip_sig_reg;
+
+`define CHIP_CTRL_REG_LEN 6
+`define CHIP_CTRL_BIT_KEY_WR 5
+`define CHIP_CTRL_BIT_COL_WR 4
+`define CHIP_CTRL_BIT_ROW_WR 3
+`define CHIP_CTRL_BIT_COL_DAT 2
+`define CHIP_CTRL_BIT_ROW_DAT 1
+`define CHIP_CTRL_BIT_ROW_RST 0
+wire [CHIP_CTRL_REG_LEN-1:0] chip_ctrl_reg;
+
+
+
 
 // CONEXIONES SALIDAS Y ENTRADAS A VECTORES
 wire chip_amp_clk;
@@ -227,24 +255,32 @@ assign to_process_fsm_ram_value    = from_ram_data_out;
 assign to_process_fsm_col_overflow = from_cnt_col_overflow;
 assign to_process_fsm_row_overflow = from_cnt_row_overflow;
 
+
+
+
 // CHIP DRIVER COMPONENT INSTANTIATION
 chip_driver u_chip_driver (
     .clk           ( clk                         ),
     .rst           ( rst                         ),
-    .i_write_key   ( to_chip_driver_i_write_key  ),
-    .i_write_col   ( to_chip_driver_i_write_col  ),
-    .i_write_row   ( to_chip_driver_i_write_row  ),
-    .i_data_col    ( to_chip_driver_i_data_col   ),
-    .i_data_row    ( to_chip_driver_i_data_row   ),
-    .i_rst_row     ( to_chip_driver_i_rst_row    ),
+    // chip_ctr_reg
+    // .i_write_key   ( to_chip_driver_i_write_key  ),
+    // .i_write_col   ( to_chip_driver_i_write_col  ),
+    // .i_write_row   ( to_chip_driver_i_write_row  ),
+    // .i_data_col    ( to_chip_driver_i_data_col   ),
+    // .i_data_row    ( to_chip_driver_i_data_row   ),
+    // .i_rst_row     ( to_chip_driver_i_rst_row    ),
+    .i_chip_ctrl_reg( i_chip_ctrl_reg ),
     .i_clk_div_sr  ( i_clk_div_sr                ),
     .i_clk_div_key ( i_clk_div_key               ),
-    .o_clk_col     ( chip_col_clk                ),
-    .o_clk_row     ( chip_row_clk                ),
-    .o_data_col    ( chip_col_data               ),
-    .o_data_row    ( chip_row_data               ),
-    .o_write_key   ( chip_key_wren               ),
-    .o_rst_row     ( chip_row_rst                ),
+    // ext_chip_reg
+    .o_chip_sig_reg();
+    // .o_clk_col     ( chip_col_clk                ),
+    // .o_clk_row     ( chip_row_clk                ),
+    // .o_data_col    ( chip_col_data               ),
+    // .o_data_row    ( chip_row_data               ),
+    // .o_write_key   ( chip_key_wren               ),
+    // .o_rst_row     ( chip_row_rst                ),
+
     .o_sync        (                             ),
     .o_rdy         ( from_chip_driver_o_rdy      )
 );
@@ -274,6 +310,8 @@ scan_module#(
         .o_key_write                    ( from_scan_fsm_key_write            ),
         .o_row_rst                      ( from_scan_fsm_row_rst              )
 );
+
+
 
 
 /*     PROCESS FSM INSTANTATION      */
@@ -320,6 +358,26 @@ cfg_fsm#(
 );
 
 // RAM INDEX COUNTERS INSTANTIATION 
+
+`define ADDR_CTRL_REG_LEN      10
+`define ADDR_CTRL_BIT_COL_RST   9
+`define ADDR_CTRL_BIT_COL_SET   8
+`define ADDR_CTRL_BIT_COL_ENA   7
+`define ADDR_CTRL_BIT_COL_SEL_1 6
+`define ADDR_CTRL_BIT_COL_SEL_0 5
+`define ADDR_CTRL_BIT_ROW_RST   4
+`define ADDR_CTRL_BIT_ROW_SET   3
+`define ADDR_CTRL_BIT_ROW_ENA   2
+`define ADDR_CTRL_BIT_ROW_SEL_1 1
+`define ADDR_CTRL_BIT_ROW_SEL_0 0
+wire [ADDR_CTRL_REG_LEN-1:0] addr_ctrl_reg;
+
+`define ADDR_FLAG_REG_LEN      
+`define ADDR_FLAG_BIT_COL_OVERFLOW      
+`define ADDR_FLAG_BIT_COL_EVEN 
+`define ADDR_FLAG_BIT_ROW_OVERFLOW      
+`define ADDR_FLAG_BIT_ROW_EVEN 
+
 
 counter_offset#(
     .MOD                 ( COLS                  )          
@@ -453,6 +511,10 @@ top_fsm u_top_fsm(
 );
 
 
+
+
+
+
 // OUTPUTS
 assign o_adc_trigger = from_scan_fsm_adc_trig;
 
@@ -466,8 +528,7 @@ assign o_status[3:0] = {
 
 
 assign o_ram_out_reg[11:0] = from_ram_data_out;
-assign o_ram_out_reg[31:10] = 20'b0;
 
 endmodule
 
-`endif
+`endif // REGISTROS

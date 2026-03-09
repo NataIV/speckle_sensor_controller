@@ -129,16 +129,33 @@ set_property -dict { PACKAGE_PIN Y19   IOSTANDARD LVCMOS33 } [get_ports { o_chip
 set_property -dict { PACKAGE_PIN W18   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_ena   }]; #IO_L22P_T3_34 Sch=JB4_P
 set_property -dict { PACKAGE_PIN W19   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_rst   }]; #IO_L22N_T3_34 Sch=JB4_N
 
+#                              Pmod (JB) ** Revisar
+#                          🔻
+#                amp_clk -- 1 (V15) (Y18)  7 -- x     
+#                amp_dat -- 2 (W15) (Y19)  8 -- x
+#                amp_ena -- 3 (T11) (W18)  9 -- x
+#                amp_rst -- 4 (T10) (W19) 10 -- x
+#                    GND -- 5             11 -- GND
+#                    VDD -- 6             12 -- VDD
+##Pmod Header JC -> CONTROL DEL AMPLIFICADOR
+set_property -dict { PACKAGE_PIN V15   IOSTANDARD LVCMOS33 } [get_ports { o_chip_amp_clk  }]; #IO_L10P_T1_34 Sch=JC1_P
+set_property -dict { PACKAGE_PIN W15   IOSTANDARD LVCMOS33 } [get_ports { o_chip_amp_data }]; #IO_L10N_T1_34 Sch=JC1_N
+set_property -dict { PACKAGE_PIN T11   IOSTANDARD LVCMOS33 } [get_ports { o_chip_amp_ena  }]; #IO_L1P_T0_34 Sch=JC2_P
+set_property -dict { PACKAGE_PIN T10   IOSTANDARD LVCMOS33 } [get_ports { o_chip_amp_rst  }]; #IO_L1N_T0_34 Sch=JC2_N
+# set_property -dict { PACKAGE_PIN W14   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_clk_cpy   }]; #IO_L8P_T1_34 Sch=JC3_P
+# set_property -dict { PACKAGE_PIN Y14   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_data_cpy  }]; #IO_L8N_T1_34 Sch=JC3_N
+# set_property -dict { PACKAGE_PIN T12   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_ena_cpy   }]; #IO_L2P_T0_34 Sch=JC4_P
+# set_property -dict { PACKAGE_PIN U12   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_rst_cpy   }]; #IO_L2N_T0_34 Sch=JC4_N
 
 ##Pmod Header JC -> Copia de las conexiones
-set_property -dict { PACKAGE_PIN V15   IOSTANDARD LVCMOS33 } [get_ports { o_chip_col_clk_cpy   }]; #IO_L10P_T1_34 Sch=JC1_P
-set_property -dict { PACKAGE_PIN W15   IOSTANDARD LVCMOS33 } [get_ports { o_chip_col_data_cpy  }]; #IO_L10N_T1_34 Sch=JC1_N
-set_property -dict { PACKAGE_PIN T11   IOSTANDARD LVCMOS33 } [get_ports { o_chip_key_wren_cpy  }]; #IO_L1P_T0_34 Sch=JC2_P
-set_property -dict { PACKAGE_PIN T10   IOSTANDARD LVCMOS33 } [get_ports { o_chip_col_rst_cpy   }]; #IO_L1N_T0_34 Sch=JC2_N
-set_property -dict { PACKAGE_PIN W14   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_clk_cpy   }]; #IO_L8P_T1_34 Sch=JC3_P
-set_property -dict { PACKAGE_PIN Y14   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_data_cpy  }]; #IO_L8N_T1_34 Sch=JC3_N
-set_property -dict { PACKAGE_PIN T12   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_ena_cpy   }]; #IO_L2P_T0_34 Sch=JC4_P
-set_property -dict { PACKAGE_PIN U12   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_rst_cpy   }]; #IO_L2N_T0_34 Sch=JC4_N
+# set_property -dict { PACKAGE_PIN V15   IOSTANDARD LVCMOS33 } [get_ports { o_chip_col_clk_cpy   }]; #IO_L10P_T1_34 Sch=JC1_P
+# set_property -dict { PACKAGE_PIN W15   IOSTANDARD LVCMOS33 } [get_ports { o_chip_col_data_cpy  }]; #IO_L10N_T1_34 Sch=JC1_N
+# set_property -dict { PACKAGE_PIN T11   IOSTANDARD LVCMOS33 } [get_ports { o_chip_key_wren_cpy  }]; #IO_L1P_T0_34 Sch=JC2_P
+# set_property -dict { PACKAGE_PIN T10   IOSTANDARD LVCMOS33 } [get_ports { o_chip_col_rst_cpy   }]; #IO_L1N_T0_34 Sch=JC2_N
+# set_property -dict { PACKAGE_PIN W14   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_clk_cpy   }]; #IO_L8P_T1_34 Sch=JC3_P
+# set_property -dict { PACKAGE_PIN Y14   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_data_cpy  }]; #IO_L8N_T1_34 Sch=JC3_N
+# set_property -dict { PACKAGE_PIN T12   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_ena_cpy   }]; #IO_L2P_T0_34 Sch=JC4_P
+# set_property -dict { PACKAGE_PIN U12   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_rst_cpy   }]; #IO_L2N_T0_34 Sch=JC4_N
 
 
 ##Pmod Header JD

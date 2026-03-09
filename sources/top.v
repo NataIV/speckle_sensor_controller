@@ -48,20 +48,26 @@ module top #(
     output o_chip_row_ena,
     output o_chip_row_data,
 
+    output o_chip_amp_clk ,
+    output o_chip_amp_rst ,
+    output o_chip_amp_ena ,
+    output o_chip_amp_data
 
-    output o_chip_col_data_cpy,
-    output o_chip_col_rst_cpy,
-    output o_chip_row_ena_cpy,
-    output o_chip_row_rst_cpy,
-    output o_chip_col_clk_cpy,
-    output o_chip_key_wren_cpy,
-    output o_chip_row_clk_cpy,
-    output o_chip_row_data_cpy
+    // output o_chip_col_data_cpy,
+    // output o_chip_col_rst_cpy,
+    // output o_chip_row_ena_cpy,
+    // output o_chip_row_rst_cpy,
+    // output o_chip_col_clk_cpy,
+    // output o_chip_key_wren_cpy,
+    // output o_chip_row_clk_cpy,
+    // output o_chip_row_data_cpy
 );
+
+wire rst = btn[0];
 
 localparam NB_RAM_ADDR = $clog2(COLS*ROWS);
 
-wire [7:0]  chip_signals;
+wire [11:0] chip_signals;
 wire [31:0] optreg;
 wire [31:0] status;
 
@@ -76,6 +82,7 @@ wire [23:0]         vio_key_clk_div;
 wire [NB_DATA-1:0]  vio_ram_output;
 wire [23:0]         vio_sr_clk_div;
 wire [NB_DATA-1:0]  vio_umbral;
+wire [5 : 0]        vio_amp_gain;
 
 speckle_sensor_controller_xadc#(
     .COLS        ( COLS         ),
@@ -85,6 +92,7 @@ speckle_sensor_controller_xadc#(
     .clk             ( clk              ),
     .i_optreg        ( optreg           ),
     .i_ram_ctrl_reg  ( ram_ctrl_reg     ),
+    .i_amp_value_reg ( vio_amp_gain     ),
     .i_umbral        ( vio_umbral       ),
     .i_clk_div_sr    ( vio_sr_clk_div   ),
     .i_clk_div_key   ( vio_key_clk_div  ),
@@ -98,11 +106,9 @@ speckle_sensor_controller_xadc#(
 vio vio_i (
     .clk            ( clk               ),
     .key_clk_div    ( vio_key_clk_div   ),
-    .ram_address    (    ),
-    .ram_output     ( ram_out_reg       ),
     .sr_clk_div     ( vio_sr_clk_div    ),
     .umbral         ( vio_umbral        ),
-    .xadc_output    (    )
+    .amp_gain       ( vio_amp_gain      )
 );
 
 ila_ram_scan dbg_ram
@@ -128,6 +134,10 @@ assign optreg[3-:4] = btn;
 assign led = status[3:0];
 
 // Salidas al chip
+assign o_chip_amp_clk  = chip_signals[11];
+assign o_chip_amp_rst  = chip_signals[10];
+assign o_chip_amp_ena  = chip_signals[9];
+assign o_chip_amp_data = chip_signals[8];
 assign o_chip_key_wren = chip_signals[7];
 assign o_chip_col_clk  = chip_signals[6];
 assign o_chip_col_rst  = chip_signals[5];
@@ -136,6 +146,7 @@ assign o_chip_row_clk  = chip_signals[3];
 assign o_chip_row_rst  = chip_signals[2];
 assign o_chip_row_ena  = chip_signals[1];
 assign o_chip_row_data = chip_signals[0];
+
 
 // Salidas Para Debug
 assign o_chip_col_data_cpy = o_chip_col_data;

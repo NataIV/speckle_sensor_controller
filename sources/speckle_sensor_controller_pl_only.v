@@ -12,6 +12,7 @@ module speckle_sensor_controller_pl_only #(
     input  [3:0] sw,
     input  [3:0] btn,
     output [3:0] led,
+    input  [5:0] i_amp_value_reg,
 
     input  [NB_DATA-1:0] i_adc_val,
     input  i_adc_done,
@@ -35,10 +36,16 @@ module speckle_sensor_controller_pl_only #(
     output o_chip_row_clk,
     output o_chip_row_rst,
     output o_chip_row_ena,
-    output o_chip_row_data
+    output o_chip_row_data,
+    
+
+    output o_chip_amp_clk ,
+    output o_chip_amp_rst ,
+    output o_chip_amp_ena ,
+    output o_chip_amp_data
 );
 
-wire [7:0] chip_signals;
+wire [11:0] chip_signals;
 wire [31:0] optreg;
 wire [31:0] status;
 
@@ -53,6 +60,7 @@ speckle_sensor_controller#(
     .clk             ( clk             ),
     .o_status        ( status          ),
     .i_optreg        ( optreg          ),
+    .i_amp_value_reg ( i_amp_value_reg ),
     .i_ram_ctrl_reg  ( i_ram_ctrl_reg  ),
     .o_ram_out_reg   ( o_ram_out_reg   ),
     .i_adc_val       ( i_adc_val       ),
@@ -65,6 +73,11 @@ speckle_sensor_controller#(
 );
 
 
+
+assign o_chip_amp_clk  = chip_signals[11];
+assign o_chip_amp_rst  = chip_signals[10];
+assign o_chip_amp_ena  = chip_signals[9];
+assign o_chip_amp_data = chip_signals[8];
 assign o_chip_key_wren = chip_signals[7];
 assign o_chip_col_clk  = chip_signals[6];
 assign o_chip_col_rst  = chip_signals[5];

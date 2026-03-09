@@ -30,6 +30,7 @@ module speckle_sensor_controller_xadc #(
     // Registros de accedidos mediante axi
     input  [31:0] i_optreg,
     input  [31:0] i_ram_ctrl_reg,
+    input  [5:0]  i_amp_value_reg,
     input  [NB_DATA-1:0] i_umbral,
     input  [`NB_FREQ_DIV-1:0] i_clk_div_sr,
     input  [`NB_FREQ_DIV-1:0] i_clk_div_key,
@@ -41,7 +42,7 @@ module speckle_sensor_controller_xadc #(
     input  vauxn6,
     input  vauxp6,
     // Salidas digitales
-    output [7:0] o_chip_signals
+    output [11:0] o_chip_signals
 );
 
 
@@ -62,7 +63,7 @@ wire [11:0] ram_out_reg;
 wire [9:0]  ram_dbg_addr;
 wire [11:0] ram_dbg_input = 0;
 
-wire [7:0] chip_signals;
+wire [11:0] chip_signals;
 wire [31:0] optreg;
 wire [31:0] status;
 
@@ -120,6 +121,7 @@ speckle_sensor_controller#(
     .o_status        ( o_status        ),
     .i_optreg        ( i_optreg        ),
     .i_ram_ctrl_reg  ( i_ram_ctrl_reg  ),
+    .i_amp_value_reg ( i_amp_value_reg ),
     .i_adc_val       ( adc_result      ),
     .i_adc_done      ( adc_done        ),
     .i_umbral        ( i_umbral        ),

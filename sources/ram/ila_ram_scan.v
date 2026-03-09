@@ -1,5 +1,5 @@
-`ifndef ILA_RAM_SCAN_H
-`define ILA_RAM_SCAN_H
+//`ifndef ILA_RAM_SCAN_H
+//`define ILA_RAM_SCAN_H
 module ila_ram_scan (
     input clk,
     input rst,
@@ -83,4 +83,4 @@ assign o_ram_dbg = (state != IDLE);
 
 
 endmodule
-`endif 
+//`endif 
