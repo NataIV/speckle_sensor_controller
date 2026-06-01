@@ -24,6 +24,7 @@ module tb_speckle_sensor_controller();
 
 localparam PERIOD = 10;
 
+reg [8*64-1:0] descripcion;
 reg  clk             ;
 reg  [ 3:0] selection;
 wire [ 3:0] btn      ;
@@ -82,11 +83,22 @@ end
 
 // Stimulus
 initial begin
+    descripcion = "Iniciando simulacion";
     amp_config = 1'b0;
     start = 1'b0;
     i_adc_done = 1'b1;
     selection = 4'b0111;
     @(negedge rst);
+    #100
+    
+    descripcion = "Configurando amplificadores";
+    @(posedge clk);
+    amp_config = 1'b1;
+    @(posedge clk);
+    amp_config = 1'b0;
+    #5000;
+    descripcion = "Iniciando Escaneo";
+    @(posedge clk);
     start = 1'b1;
     @(posedge clk);
     start = 1'b0;

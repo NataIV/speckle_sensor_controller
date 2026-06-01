@@ -224,7 +224,7 @@ module top_fsm
                 o_col_control   = i_cfg_col_control  ;
                 o_row_control   = i_cfg_row_control  ;
                 o_chip_row_ena  = 1'b1               ;
-                o_row_rst  = 1'b0               ;
+                o_row_rst       = 1'b0               ;
                 o_chip_col_rst  = 1'b0               ;
                 o_done          = 1'b0               ;
                 o_scan_go       = 1'b0;
@@ -235,7 +235,7 @@ module top_fsm
                 o_col_control   = i_scan_col_control  ;
                 o_row_control   = i_scan_row_control  ;
                 o_chip_row_ena  = 1'b1                ;
-                o_row_rst  = i_scan_row_rst      ;
+                o_row_rst       = i_scan_row_rst      ;
                 o_chip_col_rst  = 1'b0                ;
                 o_done          = 1'b0                ;
                 o_scan_go       = 1'b1;
@@ -246,7 +246,7 @@ module top_fsm
                 o_col_control   = i_process_col_control  ;
                 o_row_control   = i_process_row_control  ;
                 o_chip_row_ena  = 1'b0                   ;
-                o_row_rst  = 1'b0                   ;
+                o_row_rst       = 1'b0                   ;
                 o_chip_col_rst  = 1'b1                   ;
                 o_done          = 1'b0                   ;
                 o_scan_go       = 1'b0;
@@ -257,7 +257,7 @@ module top_fsm
                 o_col_control   = i_cfg_col_control  ;
                 o_row_control   = i_cfg_row_control  ;
                 o_chip_row_ena  = 1'b1               ;
-                o_row_rst  = 1'b0               ;
+                o_row_rst       = 1'b0               ;
                 o_chip_col_rst  = 1'b0               ;
                 o_done          = 1'b0               ;
                 o_scan_go       = 1'b0;
@@ -268,7 +268,7 @@ module top_fsm
                 o_col_control   = 5'b10000;
                 o_row_control   = 5'b10000;
                 o_chip_row_ena  = 1'b0;
-                o_row_rst  = 1'b1;
+                o_row_rst       = 1'b1;
                 o_chip_col_rst  = 1'b1;
                 o_done          = 1'b0;
                 o_scan_go       = 1'b0;

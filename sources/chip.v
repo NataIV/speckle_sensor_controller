@@ -1,3 +1,4 @@
+
 /*
 *
 *
@@ -45,10 +46,10 @@ always @(posedge clk) begin
     end
 end
 
-wire clk_col = o_chip_signals[6];
-wire rst_col = o_chip_signals[5];
-wire ena_pixel = o_chip_signals[7];
-wire dat_col = o_chip_signals[4];
+wire clk_col = i_chip_signals[6];
+wire rst_col = i_chip_signals[5];
+wire ena_pixel = i_chip_signals[7];
+wire dat_col = i_chip_signals[4];
 // 21 columnas en total, cada columna tiene llaves ARL, WE, NE, SE
 // Columnas pares (primer col = 0) no tienen su "ARL", en este codigo toma el valor 0
 // Y se bypassea esta conexion en el registro de desplazamiento
@@ -82,10 +83,10 @@ always@(clk_col) begin
 end
 
 
-wire clk_row = o_chip_signals[3];
-wire rst_row = o_chip_signals[2];
-wire ena_row = o_chip_signals[1];
-wire dat_row = o_chip_signals[0];
+wire clk_row = i_chip_signals[3];
+wire rst_row = i_chip_signals[2];
+wire ena_row = i_chip_signals[1];
+wire dat_row = i_chip_signals[0];
 reg [ROW_NUM:0] regdesp_row;
 
 always @(posedge clk_row ) begin
@@ -98,10 +99,10 @@ end
 
 
 
-wire clk_amps = o_chip_signals[11];
-wire rst_amps = o_chip_signals[10];
-wire ena_amps = o_chip_signals[9];
-wire dat_amps = o_chip_signals[8];
+wire clk_amps = i_chip_signals[11];
+wire rst_amps = i_chip_signals[10];
+wire ena_amps = i_chip_signals[9];
+wire dat_amps = i_chip_signals[8];
 reg [5:0] regdesp_amps [COL_NUM-1:0];
 integer iamps;
 always @(posedge clk_amps) begin

@@ -38,6 +38,8 @@ module speckle_sensor_controller_xadc #(
     output [31:0] o_ram_out_reg,
     output [31:0] o_status,
     
+    input  [NB_DATA-1:0] i_analog_offset,
+    output [NB_DATA-1:0] o_analog_value,
     // Entradas analogicas
     input  vauxn6,
     input  vauxp6,
@@ -50,6 +52,7 @@ module speckle_sensor_controller_xadc #(
 localparam NB_RAM_ADDR = $clog2(COLS*ROWS);
 wire busy_out;
 wire adc_trigger;
+wire signed [NB_DATA:0] adc_result_pre;
 wire [NB_DATA-1:0] adc_result;
 wire adc_done;
 wire [15:0]do_out;
@@ -67,7 +70,9 @@ wire [11:0] chip_signals;
 wire [31:0] optreg;
 wire [31:0] status;
 
-assign adc_result = do_out[15-:NB_DATA];
+assign adc_result_pre = do_out[15-:NB_DATA] - i_analog_offset;
+assign adc_result =  (adc_result_pre[NB_DATA])? 12'H000 : adc_result_pre;
+assign o_analog_value = adc_result;
 
 // wire [2:0] avg_sample_num;
 // wire [NB_DATA-1:0] avg_input_sample;
@@ -131,7 +136,6 @@ speckle_sensor_controller#(
     .o_adc_trigger   ( adc_trigger     ),
     .o_chip_signals  ( o_chip_signals  )
 );
-
 
 // assign o_chip_key_wren = chip_signals[7];
 // assign o_chip_col_clk  = chip_signals[6];

@@ -51,16 +51,20 @@ module top #(
     output o_chip_amp_clk ,
     output o_chip_amp_rst ,
     output o_chip_amp_ena ,
-    output o_chip_amp_data
+    output o_chip_amp_data,
 
-    // output o_chip_col_data_cpy,
-    // output o_chip_col_rst_cpy,
-    // output o_chip_row_ena_cpy,
-    // output o_chip_row_rst_cpy,
-    // output o_chip_col_clk_cpy,
-    // output o_chip_key_wren_cpy,
-    // output o_chip_row_clk_cpy,
-    // output o_chip_row_data_cpy
+    output o_chip_col_data_cpy,
+    output o_chip_col_rst_cpy,
+    output o_chip_row_ena_cpy,
+    output o_chip_row_rst_cpy,
+    output o_chip_col_clk_cpy,
+    output o_chip_key_wren_cpy,
+    output o_chip_row_clk_cpy,
+    output o_chip_row_data_cpy,
+    output o_chip_amp_clk_cpy,  
+    output o_chip_amp_rst_cpy,  
+    output o_chip_amp_ena_cpy,  
+    output o_chip_amp_data_cpy 
 );
 
 wire rst = btn[0];
@@ -83,6 +87,8 @@ wire [NB_DATA-1:0]  vio_ram_output;
 wire [23:0]         vio_sr_clk_div;
 wire [NB_DATA-1:0]  vio_umbral;
 wire [5 : 0]        vio_amp_gain;
+wire [11 : 0]       vio_analog_offset;
+wire [11 : 0]       vio_analog_value;
 
 speckle_sensor_controller_xadc#(
     .COLS        ( COLS         ),
@@ -100,6 +106,8 @@ speckle_sensor_controller_xadc#(
     .o_status        ( status           ),
     .vauxn6          ( vauxn6           ),
     .vauxp6          ( vauxp6           ),
+    .i_analog_offset ( vio_analog_offset),
+    .o_analog_value  ( vio_analog_value ),
     .o_chip_signals  ( chip_signals     )
 );
 
@@ -108,7 +116,9 @@ vio vio_i (
     .key_clk_div    ( vio_key_clk_div   ),
     .sr_clk_div     ( vio_sr_clk_div    ),
     .umbral         ( vio_umbral        ),
-    .amp_gain       ( vio_amp_gain      )
+    .amp_gain       ( vio_amp_gain      ),
+    .analog_offset  ( vio_analog_offset ),
+    .analog_value   ( vio_analog_value  )
 );
 
 ila_ram_scan dbg_ram
@@ -157,5 +167,8 @@ assign o_chip_col_clk_cpy =  o_chip_col_clk;
 assign o_chip_key_wren_cpy = o_chip_key_wren;
 assign o_chip_row_clk_cpy =  o_chip_row_clk; 
 assign o_chip_row_data_cpy = o_chip_row_data;
-
+assign o_chip_amp_clk_cpy  = o_chip_amp_clk;
+assign o_chip_amp_rst_cpy  = o_chip_amp_rst;
+assign o_chip_amp_ena_cpy  = o_chip_amp_ena;
+assign o_chip_amp_data_cpy = o_chip_amp_data;
 endmodule
