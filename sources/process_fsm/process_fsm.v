@@ -223,21 +223,21 @@ module process_fsm
     y conseguir el valor de cada pixel individual
     Las restas entre pixeles son:
 
-         . X         . .         X .          
-        X X         X X         X .
+         X X         X .         . .          
+        X X         X X         X X
         -           -           -
-         . .         . .         . .
-        X X         X .         X .
+         X .         . .         . .
+        X X         X X         X .
         ____        ____        ____
 
-         . X         . .         X .
-        . .         . X         . .
+         . X         X .         . .
+        . .         . .         . X
 
     El pixel inferior izquierda corresponde un pixel conectado
     a la ARL, por lo que su valor leido ya es el del pixel 
     individual.
     El resto de pixeles es un valor acumulado necesario para
-    que acceda a una ARL.
+    acceder a una ARL.
 
     La FSM encargada de desacumular estos pixeles indexará la 
     ram cada 2 pixeles y cargara los valores necesarios apli-
@@ -249,9 +249,9 @@ module process_fsm
     es decir, un offset de [1, 0].
 
     Para cada pixel las operaciones seran:
-        RAM[c, r+1]   = RAM[c, r+1]   - RAM[c, r]
+        RAM[c, r+1]   = RAM[c, r+1]   - RAM[c+1, r+1]
+        RAM[c+1, r+1] = RAM[c+1, r+1] - RAM[c, r]
         RAM[c, r]     = RAM[c, r]     - RAM[c+1, r]
-        RAM[c+1, r+1] = RAM[c+1, r+1] - RAM[c+1, r]
 
     Para que la FSM no tenga que repetir estados para cada 
     offset, estos se guardaran en una rom, y se incrementara
