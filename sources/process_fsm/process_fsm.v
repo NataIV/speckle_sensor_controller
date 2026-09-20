@@ -51,7 +51,7 @@ module process_fsm
 
 
     reg [5:0] state;
-    reg [5:0] state_next;
+    reg [5:0] next;
     reg [1:0] pixel_cnt;
 
     reg result_carry;
@@ -76,78 +76,33 @@ module process_fsm
         if(rst)
             state <= IDLE;
         else
-            state <= state_next;
+            state <= next;
     end
 
     // LOGICA DE ESTADO SIGUIENTE
     always @(*) begin
+        next = state;
         case (state)
-            IDLE: begin
-                if (i_start) begin
-                    state_next = RESET;
-                end else begin
-                    state_next = IDLE;
-                end
-            end
-            RESET: begin
-                state_next = LOAD_PIX_1_0;
-            end
-            LOAD_PIX_1_0: begin
-                state_next = LOAD_PIX_1_1;
-            end 
-            LOAD_PIX_1_1: begin
-                state_next = SAVE_PIX_1;
-            end 
-            SAVE_PIX_1: begin
-                state_next = LOAD_PIX_2_0;
-            end
-            LOAD_PIX_2_0: begin
-                state_next = LOAD_PIX_2_1;
-            end 
-            LOAD_PIX_2_1: begin
-                state_next = SAVE_PIX_2;
-            end 
-            SAVE_PIX_2: begin
-                state_next = SUBS;
-            end
-            SUBS: begin
-                state_next = WRITE_RAM;
-            end
-            WRITE_RAM: begin
-                state_next = ROW_INC;
-            end
-            ROW_INC: begin
-                state_next = ROW_CHK;
-            end
-            ROW_CHK: begin
-                if (i_row_overflow) begin
-                    state_next = COL_INC;
-                end else begin
-                    state_next = LOAD_PIX_1_0;
-                end
-            end
-            COL_INC: begin
-                state_next = COL_CHK;
-            end
-            COL_CHK: begin
-                if (i_col_overflow) begin
-                    state_next = NEXT_PIXEL;
-                end else begin
-                    state_next = LOAD_PIX_1_0;
-                end
-            end
-            NEXT_PIXEL: begin
-                if(pixel_cnt == 2'b10) begin
-                    state_next = DONE;
-                end else begin
-                    state_next = RESET;
-                end
-            end
-            DONE : begin
-                state_next = IDLE;
-            end
-            default: 
-                state_next = IDLE;
+            IDLE:           if (i_start)        next = RESET;
+            RESET:                              next = LOAD_PIX_1_0;
+            LOAD_PIX_1_0:                       next = LOAD_PIX_1_1;
+            LOAD_PIX_1_1:                       next = SAVE_PIX_1;
+            SAVE_PIX_1:                         next = LOAD_PIX_2_0;
+            LOAD_PIX_2_0:                       next = LOAD_PIX_2_1;
+            LOAD_PIX_2_1:                       next = SAVE_PIX_2;
+            SAVE_PIX_2:                         next = SUBS;
+            SUBS:                               next = WRITE_RAM;
+            WRITE_RAM:                          next = ROW_INC;
+            ROW_INC:                            next = ROW_CHK;
+            ROW_CHK:        if (i_row_overflow) next = COL_INC;
+                            else                next = LOAD_PIX_1_0;
+            COL_INC:                            next = COL_CHK;
+            COL_CHK:        if (i_col_overflow) next = NEXT_PIXEL;
+                            else                next = LOAD_PIX_1_0;
+            NEXT_PIXEL:     if(pixel_cnt == 2)  next = DONE;
+                            else                next = RESET;
+            DONE :                              next = IDLE;
+            default:                            next = IDLE;
         endcase    
     end
 
@@ -157,22 +112,17 @@ module process_fsm
             pix_1 <= {(NB_ADC+1){1'b0}};
             pix_2 <= {(NB_ADC+1){1'b0}};
             result_reg <= {(NB_ADC+1){1'b0}};
+            result_carry <= 1'b0;
         end else begin
-            if ( state == SAVE_PIX_1 ) begin
-               pix_1 <= i_ram_value;
-            end
-            else if (state == SAVE_PIX_2)  begin
-               pix_2 <= i_ram_value;
-            end 
-            else if (state == SUBS) begin
-                {result_carry, result_reg} <= pix_1 - pix_2;
-            end
+            if      (state == SAVE_PIX_1)   pix_1 <= i_ram_value;
+            else if (state == SAVE_PIX_2)   pix_2 <= i_ram_value;
+            else if (state == SUBS)         {result_carry, result_reg} <= pix_1 - pix_2;
         end
     end
 
     /*    Control del direccionamiento de memoria    */
-    always@(*)begin
-            case(state)
+    always@(posedge clk)begin
+            case(next)
             IDLE           : begin
                 o_row_control = `COUNTER_RESET;
                 o_col_control = `COUNTER_RESET;

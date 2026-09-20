@@ -1,24 +1,4 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 05.07.2024 15:09:56
-// Design Name: 
-// Module Name: avg
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
 
 module avg #(
     parameter NB_DATA = 12
@@ -26,13 +6,13 @@ module avg #(
     input clk,
     input rst,
     input i_start,
-    input i_adc_done,
-    input [2:0] i_nSamples,
-    input [NB_DATA-1:0] i_sample,
+    input i_eoc,
+    input [2:0] i_size,
+    input [NB_DATA-1:0] i_data,
     
-    output o_done,
-    output o_adcTrigger,
-    output [NB_DATA-1:0] o_result
+    output reg o_done,
+    output reg o_trig,
+    output [NB_DATA-1:0] o_data
     );
 
 
@@ -41,26 +21,25 @@ module avg #(
         TRIGGER_ADC = 1,
         WAIT_ADC = 2,
         ACUM = 3,
-        SHIFT = 4,
-        DONE = 5;
+        DEC_CNT = 4,
+        SHIFT = 5,
+        DONE = 6;
 
-    reg [3:0] state, nextState;
+    reg [3:0] state, next;
     reg [7:0] count;
-    reg [2:0] sample_num;
-    reg [NB_DATA-1:0] sample_reg;
-    reg [NB_DATA+$clog2(127)-1:0] acum_reg;
+    reg [2:0] size;
+    reg [NB_DATA+$clog2(255)-1:0] acum_reg;
     reg [NB_DATA-1:0] avg_reg;
 
-    wire e1, e2, e3, ec;
+    reg e1, e2, ec;
 
     // REGISTROS
-    always @(posedge clk ) if(i_start) sample_num <= i_nSamples;
-    always @(posedge clk ) if(i_start) sample_reg <= 0; else if(e1) sample_reg <= i_sample;
-    always @(posedge clk ) if(i_start) acum_reg <= 0;   else if(e2) acum_reg <= acum_reg + sample_reg;
-    always @(posedge clk ) if(i_start) avg_reg <= 0;    else if(e3) avg_reg <= (acum_reg >> sample_num);
+    always @(posedge clk) if(i_start) size <= i_size; // Guardo el numero de muestras al empezar
+    always @(posedge clk) if(i_start) acum_reg <= 0;   else if(e1) acum_reg <= acum_reg + i_data; // e2 habilita el incremento del contador
+    always @(posedge clk) if(i_start) avg_reg <= 0;    else if(e2) avg_reg <= (acum_reg >> size); // e3 calcula el promedio
 
-    always @(posedge clk ) 
-        if(i_start) count <= 1<<i_nSamples;
+    always @(posedge clk) 
+        if(i_start) count <= 1 << i_size;
         else if(ec) count <= count - 1;
 
     // REGISTRO DE ESTADO
@@ -68,54 +47,47 @@ module avg #(
         if (rst) begin
             state <= IDLE;
         end else begin
-            state <= nextState;
+            state <= next;
         end
     end
 
 
     always @(*) begin
+        next = state; // Si no se cumple la condicion, vuelvo al mismo estado.
         case (state)
-            IDLE: begin
-                if(i_start)begin
-                    nextState = TRIGGER_ADC;
-                end else begin
-                    nextState = IDLE;
-                end
-            end
-            TRIGGER_ADC: begin
-                nextState = WAIT_ADC;                
-            end
-            WAIT_ADC: begin
-                if(i_adc_done)begin
-                    nextState = ACUM;
-                end else begin
-                    nextState = WAIT_ADC;
-                end
-            end
-            ACUM: begin
-                if(count == 0)begin
-                    nextState = SHIFT; 
-                end else begin
-                    nextState = TRIGGER_ADC;
-                end
-            end
-            SHIFT: begin
-                nextState = DONE;
-            end
-            DONE: begin
-                nextState = IDLE;
-            end
-            default: 
-                nextState = IDLE;
+            IDLE:           if(i_start)     next = TRIGGER_ADC;
+            TRIGGER_ADC:                    next = WAIT_ADC;
+            WAIT_ADC:       if(i_eoc)       next = ACUM;
+            ACUM:                           next = DEC_CNT;
+            DEC_CNT:        if(count == 1)  next = SHIFT;
+                            else            next = TRIGGER_ADC;
+            SHIFT:                          next = DONE;
+            DONE:                           next = IDLE;
+            default:                        next = IDLE;
         endcase
     end
 
-    assign e1 = state == ACUM;
-    assign ec = state == ACUM;
-    assign e2 = state == ACUM;
-    assign e3 = state == SHIFT;
-    assign o_adcTrigger = state == TRIGGER_ADC;
-    assign o_done = (state == DONE);
-    assign o_result = avg_reg;
+
+    always @(posedge clk) begin
+        e1 <= 1'b0;
+        ec <= 1'b0;
+        e2 <= 1'b0;
+        o_trig <= 1'b0;
+        o_done <= 1'b0;
+        case (next)
+            IDLE:           ;
+            TRIGGER_ADC:    o_trig  <= 1'b1;
+            WAIT_ADC:       ;
+            ACUM:           e1  <= 1'b1;
+            DEC_CNT:        ec  <= 1'b1;
+            SHIFT:          e2  <= 1'b1;
+            DONE:           o_done <= 1'b1;
+            default:        ;
+        endcase
+    end
+
+
+
+    assign o_data = avg_reg;
 
 endmodule

@@ -129,7 +129,7 @@ set_property -dict { PACKAGE_PIN Y19   IOSTANDARD LVCMOS33 } [get_ports { o_chip
 set_property -dict { PACKAGE_PIN W18   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_ena   }]; #IO_L22P_T3_34 Sch=JB4_P
 set_property -dict { PACKAGE_PIN W19   IOSTANDARD LVCMOS33 } [get_ports { o_chip_row_rst   }]; #IO_L22N_T3_34 Sch=JB4_N
 
-#                              Pmod (JB) ** Revisar
+#                              Pmod (JB) 
 #                          🔻
 #                amp_clk -- 1 (V15) (Y18)  7 -- x     
 #                amp_dat -- 2 (W15) (Y19)  8 -- x

@@ -39,6 +39,7 @@ module speckle_sensor_controller_xadc #(
     output [31:0] o_status,
     
     input  [NB_DATA-1:0] i_analog_offset,
+    input  [2:0] i_avg_len,
     output [NB_DATA-1:0] o_analog_value,
     // Entradas analogicas
     input  vauxn6,
@@ -70,38 +71,38 @@ wire [11:0] chip_signals;
 wire [31:0] optreg;
 wire [31:0] status;
 
-assign adc_result_pre = do_out[15-:NB_DATA] - i_analog_offset;
-assign adc_result =  (adc_result_pre[NB_DATA])? 12'H000 : adc_result_pre;
+assign adc_result_pre = do_out[15-:NB_DATA] - i_analog_offset; 
+assign adc_result =  (adc_result_pre[NB_DATA])? 12'H000 : adc_result_pre; // Saturo en caso de numeros negativos
 assign o_analog_value = adc_result;
 
-// wire [2:0] avg_sample_num;
-// wire [NB_DATA-1:0] avg_input_sample;
-// wire avg_start;
-// wire avg_input_sample_ready;
-// wire avg_input_sample_trigger;
-// wire avg_done;
-// wire [NB_DATA-1:0] avg_output;
 
-// avg#(
-//     .NB_DATA      ( NB_DATA )
-// )u_avg(
-//     .clk          ( clk                         ),
-//     .rst          ( rst                         ),
-//     .i_start      ( avg_start                   ),
-//     .i_adc_done   ( avg_input_sample_ready      ),
-//     .i_nSamples   ( avg_sample_num              ),
-//     .i_sample     ( avg_input_sample            ),
-//     .o_done       ( avg_done                    ),
-//     .o_adcTrigger ( avg_input_sample_trigger    ),
-//     .o_result     ( avg_output                  )
-// );
+/// PROMEDIO DE MEDICIONES
+wire avg_input_sample_trigger;
+wire avg_done;
+wire [NB_DATA-1:0] avg_result;
+
+avg#(
+    .NB_DATA      ( NB_DATA )
+)u_avg(
+    .clk          ( clk                         ),
+    .rst          ( rst                         ),
+    .i_start      ( adc_trigger                 ),
+    .i_eoc        ( adc_done                    ),
+    .i_size       ( i_avg_len                   ),
+    .i_data       ( adc_result                  ),
+    .o_done       ( avg_done                    ),
+    .o_trig       ( avg_input_sample_trigger    ),
+    .o_data       ( avg_result                  )
+);
+
+// PROMEDIO DE MEDICIONES
 
 adc adc_i(   
     .alarm_out                    (                              ),
     .busy_out                     ( busy_out                     ),
     .channel_out                  (                              ),
     .convst_in                    ( adc_trigger                  ),
-    .daddr_in                     ( 6'h16                        ),
+    .daddr_in                     ( 6'h16                        ), // Canal del ADC
     .dclk_in                      ( clk                          ),
     .den_in                       ( 1'b1                         ),
     .di_in                        ( 16'h0000                     ),
@@ -127,13 +128,16 @@ speckle_sensor_controller#(
     .i_optreg        ( i_optreg        ),
     .i_ram_ctrl_reg  ( i_ram_ctrl_reg  ),
     .i_amp_value_reg ( i_amp_value_reg ),
-    .i_adc_val       ( adc_result      ),
-    .i_adc_done      ( adc_done        ),
+    // .i_adc_val       ( adc_result      ),
+    // .i_adc_done      ( adc_done        ),
+    // .o_adc_trigger   ( adc_trigger     ),
+    .i_adc_val       ( avg_result      ),
+    .i_adc_done      ( avg_done        ),
+    .o_adc_trigger   ( avg_trigger     ),
     .i_umbral        ( i_umbral        ),
     .i_clk_div_sr    ( i_clk_div_sr    ),
     .i_clk_div_key   ( i_clk_div_key   ),
     .o_ram_out_reg   ( o_ram_out_reg   ),
-    .o_adc_trigger   ( adc_trigger     ),
     .o_chip_signals  ( o_chip_signals  )
 );
 

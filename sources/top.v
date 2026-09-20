@@ -87,6 +87,7 @@ wire [NB_DATA-1:0]  vio_ram_output;
 wire [23:0]         vio_sr_clk_div;
 wire [NB_DATA-1:0]  vio_umbral;
 wire [5 : 0]        vio_amp_gain;
+wire [2 : 0]        vio_avg_len;
 wire [11 : 0]       vio_analog_offset;
 wire [11 : 0]       vio_analog_value;
 
@@ -107,6 +108,7 @@ speckle_sensor_controller_xadc#(
     .vauxn6          ( vauxn6           ),
     .vauxp6          ( vauxp6           ),
     .i_analog_offset ( vio_analog_offset),
+    .i_avg_len       ( vio_avg_len      ),
     .o_analog_value  ( vio_analog_value ),
     .o_chip_signals  ( chip_signals     )
 );
@@ -117,6 +119,7 @@ vio vio_i (
     .sr_clk_div     ( vio_sr_clk_div    ),
     .umbral         ( vio_umbral        ),
     .amp_gain       ( vio_amp_gain      ),
+    .avg_len        ( vio_avg_len       ),
     .analog_offset  ( vio_analog_offset ),
     .analog_value   ( vio_analog_value  )
 );

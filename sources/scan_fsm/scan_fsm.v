@@ -120,166 +120,102 @@ module scan_fsm
     /*    DECLARACION DE ESTADOS    */
 
     reg [4:0] state;
-    reg [4:0] state_next;
+    reg [4:0] next;
 
     localparam
-        STATE_IDLE                    = 0,      // Espera que se inicie el scan
-        STATE_COL_WRITE_CFG_WORD      = 1,      // Escribe la palabra de configuracion al sr de columnas
-        STATE_COL_WAIT_CFG_WORD       = 2,      // Espera a que termine la escritura
-        STATE_ROW_WRITE_1             = 3,      // Escribe un 1 en el sr de filas
-        STATE_PIXELS_WRITE            = 5,      // Habilita escritura de pixeles    
-        STATE_ADC_TRIGGER             = 6,      // Inicia la lectura del ADC
-        STATE_ADC_WAIT                = 7,      // Espera a que termine el ADC (Capaz se puede remover con clock gatting)
-        STATE_RAM_WRITE               = 8,      // Escribe en la memoria RAM
-        STATE_ROW_WRITE_0_0           = 9,      // Desplaza el registro de filas (escribir 0 en el sr de filas)
-        STATE_ROW_WRITE_0_1           = 10,     // Desplaza el registro de filas (escribir 0 en el sr de filas)
-        STATE_COL_WRITE_0000000       = 11,     // Desplaza la palabra de configuracion
-        STATE_COL_NEXT_CFG_WORD       = 12,     // Carga la siguiente palabra de configuracion
-        STATE_RAM_COL_INC             = 13,
-        STATE_RAM_ROW_INC             = 14,
-        STATE_ROW_WRITE_1_WAIT        = 15,
-        STATE_PIXELS_WRITE_WAIT       = 16,
-        STATE_ROW_WRITE_0_0_WAIT      = 17,
-        STATE_ROW_WRITE_0_1_WAIT      = 18,
-        STATE_COL_WRITE_0000000_WAIT  = 19,
-        STATE_CHECK_NEXT              = 20,
-        STATE_CLEAN_COL_REG           = 21,
-        STATE_CLEAN_COL_REG_WAIT      = 22,
-        STATE_CLEAN_PIXELS            = 23,
-        STATE_CLEAN_PIXELS_WAIT       = 24,
-        STATE_RESET_ROW               = 25,
-        STATE_RESET_ROW_WAIT          = 26,
-        STATE_RESET_ROW_0             = 27,
-        STATE_RESET_ROW_WAIT_0         = 28,
-        STATE_DONE                    = 29;
+        IDLE              = 0,      // Espera que se inicie el scan
+        COL_WR_CFG_WORD   = 1,      // Escribe la palabra de configuracion al sr de columnas
+        COL_WAIT_CFG_WORD = 2,      // Espera a que termine la escritura
+        ROW_WR_1          = 3,      // Escribe un 1 en el sr de filas
+        PIX_WR            = 5,      // Habilita escritura de pixeles    
+        ADC_TRIGGER       = 6,      // Inicia la lectura del ADC
+        ADC_WAIT          = 7,      // Espera a que termine el ADC (Capaz se puede remover con clock gatting)
+        RAM_WR            = 8,      // Escribe en la memoria RAM
+        ROW_WR_0_0        = 9,      // Desplaza el registro de filas (escribir 0 en el sr de filas)
+        ROW_WR_0_1        = 10,     // Desplaza el registro de filas (escribir 0 en el sr de filas)
+        COL_WR_ZERO       = 11,     // Desplaza la palabra de configuracion
+        COL_NEXT_CFG_WORD = 12,     // Carga la siguiente palabra de configuracion
+        COL_INC           = 13,
+        ROW_INC           = 14,
+        ROW_WR_1_WAIT     = 15,
+        PIX_WR_WAIT       = 16,
+        ROW_WR_0_0_WAIT   = 17,
+        ROW_WR_0_1_WAIT   = 18,
+        COL_WR_ZERO_WAIT  = 19,
+        CHK_NEXT          = 20,
+        CLR_COL_REG       = 21,
+        CLR_COL_REG_WAIT  = 22,
+        CLR_PIXELS        = 23,
+        CLR_PIX_WAIT      = 24,
+        ROW_RST           = 25,
+        ROW_RST_WAIT      = 26,
+        ROW_RST_0         = 27,
+        ROW_RST_WAIT_0    = 28,
+        DONE              = 29;
         
 
     /*    MEMORIA    */
     always @(posedge clk) begin
         if(i_rst)
-            state <= STATE_IDLE;
+            state <= IDLE;
         else
-            state <= state_next;
+            state <= next;
     end
 
     /*    LOGICA DE ESTADO SIGUIENTE    */
     always @(*) begin
+        next = state;
         case(state) 
-        STATE_IDLE : begin 
-            // Espero la señal de inicio
-            if(i_start_scan)    state_next = STATE_COL_WRITE_CFG_WORD;
-            else                state_next = STATE_IDLE;
-        end
-        STATE_COL_WRITE_CFG_WORD : begin
-            // Escribo la palabra de configuracion
-                                state_next = STATE_COL_WAIT_CFG_WORD;
-        end
-        STATE_COL_WAIT_CFG_WORD  : begin
-            // Espero a que el registro de desplazamiento termine de escribir la palabra de configuracion
-            if(i_col_rdy)       state_next = STATE_ROW_WRITE_1;
-            else                state_next = STATE_COL_WAIT_CFG_WORD;
-        end
-        STATE_ROW_WRITE_1       : begin
-            // Escribo el primer 1 al registro de filas del chip fotodetector
-            state_next =  STATE_ROW_WRITE_1_WAIT;
-        end
-        STATE_ROW_WRITE_1_WAIT  : begin
-            if(i_row_rdy)       state_next = STATE_PIXELS_WRITE;
-            else                state_next = STATE_ROW_WRITE_1_WAIT;
-        end
-        STATE_PIXELS_WRITE      : begin
-            // Escribo las llaves del array de pixeles
-            state_next = STATE_PIXELS_WRITE_WAIT;
-        end
-        STATE_PIXELS_WRITE_WAIT : begin
-            // Espero a que finalice la escritura de pixeles
-            if(i_key_rdy)       state_next = STATE_ADC_TRIGGER;
-            else                state_next = STATE_PIXELS_WRITE_WAIT;
-        end
-        STATE_ADC_TRIGGER       : begin
-            // Inicio la conversion AD
-            state_next = STATE_ADC_WAIT;
-        end
-        STATE_ADC_WAIT          : begin
-            // Espero a que la conversion AD termine
-            if(i_adc_done)      state_next = STATE_RAM_WRITE;
-            else                state_next = STATE_ADC_WAIT;
-        end
-        STATE_RAM_WRITE      : begin
-            // Escribo el valor en la memoria RAM
-            state_next = STATE_ROW_WRITE_0_0;
-        end
-        STATE_ROW_WRITE_0_0   : begin
-            // desplazo el 1 en el registro de filas
-            state_next = STATE_ROW_WRITE_0_0_WAIT;
-        end
-        STATE_ROW_WRITE_0_0_WAIT: begin
-            if(i_row_rdy) state_next = STATE_ROW_WRITE_0_1;
-            else          state_next = STATE_ROW_WRITE_0_0_WAIT;
-        end
-        STATE_ROW_WRITE_0_1   : begin
-            // desplazo el 1 en el registro de filas
-            state_next = STATE_ROW_WRITE_0_1_WAIT;
-        end
-        STATE_ROW_WRITE_0_1_WAIT: begin 
-            if(i_row_rdy)   state_next = STATE_RAM_ROW_INC;
-            else            state_next = STATE_ROW_WRITE_0_1_WAIT;
-        end
-        STATE_RAM_ROW_INC : begin
-            if(i_row_overflow)  state_next = STATE_CLEAN_PIXELS;
-            else                state_next = STATE_PIXELS_WRITE;
-        end
-        STATE_CLEAN_PIXELS: begin
-            state_next = STATE_CLEAN_PIXELS_WAIT;
-        end
-        STATE_CLEAN_PIXELS_WAIT: begin
-            if(i_key_rdy) state_next = STATE_RESET_ROW;
-            else          state_next = STATE_CLEAN_PIXELS_WAIT; 
-        end
-        STATE_RESET_ROW: begin
-            state_next = STATE_RESET_ROW_WAIT;
-        end
-        STATE_RESET_ROW_WAIT: begin
-            if(i_row_rdy) state_next = STATE_RAM_COL_INC;
-            else          state_next = STATE_RESET_ROW_WAIT;
-        end
-        STATE_RAM_COL_INC : begin
-            if(i_col_overflow)   state_next = STATE_COL_NEXT_CFG_WORD;
-            else                 state_next = STATE_COL_WRITE_0000000;
-        end
-        STATE_COL_WRITE_0000000  : begin
-            state_next = STATE_COL_WRITE_0000000_WAIT;
-        end
-        STATE_COL_WRITE_0000000_WAIT  : begin
-            if(i_col_rdy) state_next = STATE_ROW_WRITE_1;
-            else          state_next = STATE_COL_WRITE_0000000_WAIT;
-        end
-        STATE_COL_NEXT_CFG_WORD  : begin 
-            if(cfg_cnt < CFG_CNT_MAX) state_next = STATE_COL_WRITE_CFG_WORD;
-            else state_next = STATE_CLEAN_COL_REG;
-        end
-        STATE_CLEAN_COL_REG: begin
-            state_next = STATE_CLEAN_COL_REG_WAIT;
-        end
-        STATE_CLEAN_COL_REG_WAIT: begin
-            if(i_col_rdy) state_next = STATE_DONE;
-            else          state_next = STATE_CLEAN_COL_REG_WAIT;
-        end 
-        STATE_DONE : begin
-            state_next = STATE_IDLE;
-        end
-        default : begin
-            state_next = STATE_IDLE;
-        end
+        // Espero la señal de inicio
+        IDLE :             if(i_start_scan)             next = COL_WR_CFG_WORD;
+        // Escribo la palabra de configuracion
+        COL_WR_CFG_WORD :                               next = COL_WAIT_CFG_WORD;
+        // Espero a que el registro de desplazamiento termine de escribir la palabra de configuracion
+        COL_WAIT_CFG_WORD: if(i_col_rdy)                next = ROW_WR_1;
+        // Escribo el primer 1 al registro de filas del chip fotodetector
+        ROW_WR_1:                                       next = ROW_WR_1_WAIT;
+        ROW_WR_1_WAIT:     if(i_row_rdy)                next = PIX_WR;
+        // Escribo las llaves del array de pixeles
+        PIX_WR      :                                   next = PIX_WR_WAIT;
+        // Espero a que finalice la escritura de pixeles
+        PIX_WR_WAIT :      if(i_key_rdy)                next = ADC_TRIGGER;
+        // Inicio la conversion AD
+        ADC_TRIGGER:                                    next = ADC_WAIT;
+        // Espero a que la conversion AD termine
+        ADC_WAIT   :       if(i_adc_done)               next = RAM_WR;
+        // Escribo el valor en la memoria RAM
+        RAM_WR      :                                   next = ROW_WR_0_0;
+        // desplazo el 1 en el registro de filas
+        ROW_WR_0_0   :                                  next = ROW_WR_0_0_WAIT;
+        ROW_WR_0_0_WAIT:   if(i_row_rdy)                next = ROW_WR_0_1;
+        // desplazo el 1 en el registro de filas
+        ROW_WR_0_1   :                                  next = ROW_WR_0_1_WAIT;
+        ROW_WR_0_1_WAIT:   if(i_row_rdy)                next = ROW_INC;
+        ROW_INC :          if(i_row_overflow)           next = CLR_PIXELS;
+                           else                         next = PIX_WR;
+        CLR_PIXELS:                                     next = CLR_PIX_WAIT;
+        CLR_PIX_WAIT:      if(i_key_rdy)                next = ROW_RST;
+        ROW_RST:                                        next = ROW_RST_WAIT;
+        ROW_RST_WAIT:      if(i_row_rdy)                next = COL_INC;
+        COL_INC :          if(i_col_overflow)           next = COL_NEXT_CFG_WORD;
+                           else                         next = COL_WR_ZERO;
+        COL_WR_ZERO  :                                  next = COL_WR_ZERO_WAIT;
+        COL_WR_ZERO_WAIT:  if(i_col_rdy)                next = ROW_WR_1;
+        COL_NEXT_CFG_WORD: if(cfg_cnt < CFG_CNT_MAX)    next = COL_WR_CFG_WORD;
+                           else                         next = CLR_COL_REG;
+        CLR_COL_REG:                                    next = CLR_COL_REG_WAIT;
+        CLR_COL_REG_WAIT:  if(i_col_rdy)                next = DONE;
+        DONE :                                          next = IDLE;
+        default :                                       next = IDLE;
         endcase
     end
 
 
     // Contador de palabra de configuracion
     always@(posedge clk)begin
-        if(state==STATE_IDLE)
+        if(state==IDLE)
             cfg_cnt <= 2'b00;
-        else if(state == STATE_COL_NEXT_CFG_WORD)
+        else if(state == COL_NEXT_CFG_WORD)
             cfg_cnt = cfg_cnt + 1;
     end
 
@@ -314,24 +250,24 @@ module scan_fsm
             o_row_control = `COUNTER_RESET;
             o_col_control = `COUNTER_RESET;
         end else begin
-            case(state_next)
-            STATE_IDLE           : begin
+            case(next)
+            IDLE           : begin
                 o_row_control = `COUNTER_RESET;
                 o_col_control = `COUNTER_RESET;
             end
-            STATE_RAM_ROW_INC   : begin
+            ROW_INC   : begin
                 o_row_control = `COUNTER_ENABLE | `COUNTER_INC_2;
                 o_col_control = `COUNTER_NO_CHANGE;
             end
-            STATE_RAM_COL_INC : begin
+            COL_INC : begin
                 o_row_control = `COUNTER_RESET;
                 o_col_control = `COUNTER_ENABLE | `COUNTER_INC_2;
             end
-            STATE_RAM_WRITE   : begin
+            RAM_WR   : begin
                 o_row_control = offset_row;
                 o_col_control = offset_col;
             end
-            STATE_COL_NEXT_CFG_WORD  : begin
+            COL_NEXT_CFG_WORD  : begin
                 o_row_control = `COUNTER_RESET;
                 o_col_control = `COUNTER_RESET;
             end
@@ -345,19 +281,19 @@ module scan_fsm
 
 
 /*    LOGICA DE SALIDA    */
-    assign o_col_reg_write = (state == STATE_COL_WRITE_CFG_WORD) || (state == STATE_COL_WRITE_0000000) || (state == STATE_CLEAN_COL_REG);
-    assign o_col_reg_data  = (state == STATE_COL_WRITE_CFG_WORD) ? cfg_word[cfg_cnt] : 7'b0000000;
-    assign o_row_reg_write = (state == STATE_ROW_WRITE_1) || (state == STATE_ROW_WRITE_0_0) || (state == STATE_ROW_WRITE_0_1);
-    assign o_key_write     = (state == STATE_PIXELS_WRITE) || (state == STATE_CLEAN_PIXELS);
-    assign o_row_rst       = (state == STATE_RESET_ROW) || (state == STATE_RESET_ROW_0);
-    assign o_ram_write     = (state == STATE_RAM_WRITE);
-    assign o_adc_trig      = (state == STATE_ADC_TRIGGER);
-    assign o_scan_ready    = (state == STATE_DONE);
+    assign o_col_reg_write = (state == COL_WR_CFG_WORD) || (state == COL_WR_ZERO) || (state == CLR_COL_REG);
+    assign o_col_reg_data  = (state == COL_WR_CFG_WORD) ? cfg_word[cfg_cnt] : 7'b0000000;
+    assign o_row_reg_write = (state == ROW_WR_1) || (state == ROW_WR_0_0) || (state == ROW_WR_0_1);
+    assign o_key_write     = (state == PIX_WR) || (state == CLR_PIXELS);
+    assign o_row_rst       = (state == ROW_RST) || (state == ROW_RST_0);
+    assign o_ram_write     = (state == RAM_WR);
+    assign o_adc_trig      = (state == ADC_TRIGGER);
+    assign o_scan_ready    = (state == DONE);
 
 `ifdef INCREMENTAL_SCAN
-    assign o_row_reg_data  = (state == STATE_ROW_WRITE_1) || (state == STATE_ROW_WRITE_0_1); // Para encender de manera incremental
+    assign o_row_reg_data  = (state == ROW_WR_1) || (state == ROW_WR_0_1); // Para encender de manera incremental
 `else
-    assign o_row_reg_data  = (state == STATE_ROW_WRITE_1);
+    assign o_row_reg_data  = (state == ROW_WR_1);
 `endif
     
 endmodule
