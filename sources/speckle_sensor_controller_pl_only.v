@@ -87,6 +87,7 @@ assign o_chip_row_rst  = chip_signals[2];
 assign o_chip_row_ena  = chip_signals[1];
 assign o_chip_row_data = chip_signals[0];
 
+assign optreg[31:8] = 24'b0000_0000_0000_0000_0000_0000;
 assign optreg[7-:4] = sw ;
 assign optreg[3-:4] = btn;
 

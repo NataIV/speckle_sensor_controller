@@ -37,9 +37,10 @@ module scan_module
     output o_col_reg_data,
     output o_col_reg_write,
 
-    output o_key_write,
-
-    output o_row_rst
+    output o_row_ena,
+    output o_row_rst,
+    output o_col_rst,
+    output o_key_write
 
 );
     localparam MEM_DEPTH   = PIXEL_N_ROWS * PIXEL_N_COLS;
@@ -59,26 +60,28 @@ scan_fsm #(
     .NB_ADC (NB_ADC)
 )
     u_scan_fsm(
-    .clk                                ( clk                                ),
-    .i_rst                              ( i_rst                              ),
-    .i_start_scan                       ( i_start_scan                       ),
-    .o_scan_ready                       ( o_scan_ready                       ),
-    .o_ram_write                        ( o_ram_write                        ),
-    .o_adc_trig                         ( o_adc_trig                         ),
-    .i_adc_done                         ( i_adc_done                         ),
-    .i_row_overflow                     ( i_row_overflow                     ),
-    .i_col_overflow                     ( i_col_overflow                     ),
-    .o_row_control                      ( o_row_control                      ),
-    .o_col_control                      ( o_col_control                      ),
-    .i_row_rdy                          ( i_chip_rdy                         ),
-    .i_col_rdy                          ( fsm_col_ready                      ),
-    .i_key_rdy                          ( i_chip_rdy                         ),
-    .o_row_reg_data                     ( o_row_reg_data                     ),
-    .o_row_reg_write                    ( o_row_reg_write                    ),
-    .o_col_reg_data                     ( sr_col_data                        ),
-    .o_col_reg_write                    ( sr_col_write                       ),
-    .o_key_write                        ( o_key_write                        ),
-    .o_row_rst                          ( o_row_rst                          )
+    .clk                                ( clk               ),
+    .i_rst                              ( i_rst             ),
+    .i_start_scan                       ( i_start_scan      ),
+    .o_scan_ready                       ( o_scan_ready      ),
+    .o_ram_write                        ( o_ram_write       ),
+    .o_adc_trig                         ( o_adc_trig        ),
+    .i_adc_done                         ( i_adc_done        ),
+    .i_row_overflow                     ( i_row_overflow    ),
+    .i_col_overflow                     ( i_col_overflow    ),
+    .o_row_control                      ( o_row_control     ),
+    .o_col_control                      ( o_col_control     ),
+    .i_row_rdy                          ( i_chip_rdy        ),
+    .i_col_rdy                          ( fsm_col_ready     ),
+    .i_key_rdy                          ( i_chip_rdy        ),
+    .o_row_reg_data                     ( o_row_reg_data    ),
+    .o_row_reg_write                    ( o_row_reg_write   ),
+    .o_col_reg_data                     ( sr_col_data       ),
+    .o_col_reg_write                    ( sr_col_write      ),
+    .o_key_write                        ( o_key_write       ),
+    .o_row_ena                          ( o_row_ena         ),
+    .o_row_rst                          ( o_row_rst         ),
+    .o_col_rst                          ( o_col_rst         )
 );
 
 

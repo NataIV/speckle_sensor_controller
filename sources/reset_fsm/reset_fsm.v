@@ -10,110 +10,104 @@ module reset_fsm #(
     input        i_chip_write_ready,
 
     // Al chip
-    output o_row_reg_data,
-    output o_row_reg_write,
+    output reg o_row_reg_data,
+    output reg o_row_reg_write,
 
-    output o_col_reg_data,
-    output o_col_reg_write,
+    output reg o_col_reg_data,
+    output reg o_col_reg_write,
 
-    output o_key_wren,
+    output reg o_key_wren,
     
-    output o_done
+    output reg o_done
 );
 
 
 // Contadores
-    reg [5:0] col;
-    reg [5:0] row;
-    reg col_rst;
-    reg col_ena;
-    reg row_rst;
-    reg row_ena;
+    reg [7:0] col;
+    reg [7:0] row;
     
-
-    always @(posedge clk) begin
-        if (cnt_col_rst) begin
-            col <= 0;
-        end else if(cnt_col_ena) begin
-            col <= col + 1;
-        end
-    end
-
-    always @(posedge clk) begin
-        if (cnt_row_rst) begin
-            row <= 0;
-        end else if(cnt_row_ena) begin
-            row <= row + 1;
-        end
-    end
-
 // Maquina de estados
     localparam 
         IDLE          =  0,
-        COL_WRITE     =  1,
-        INC_CNT_COL   =  2,
-        ROW_WRITE     =  3,
-        INC_CNT_ROW   =  4,
-        KEY_ENABLE    =  5,
-        DONE          =  6;
+        COL_WAIT      =  1,
+        COL_WRITE     =  2,
+        INC_COL       =  3,
+        ROW_WAIT      =  4,
+        ROW_WRITE     =  5,
+        INC_ROW       =  6,
+        KEY_ENABLE    =  7,
+        DONE          =  8;
 
 // Registros        
     reg [3:0] state;
-    reg [3:0] next_state;
+    reg [3:0] next;
 
     always @(posedge clk or posedge rst) begin
         if(rst)
             state <= 4'b0000;
         else
-            state <= next_state;
+            state <= next;
     end
 // Logica de estado siguientes
     always @(*) begin
+        next = state;
         case (state)
-        IDLE        : next_state <= i_start ? COL_WRITE : IDLE; 
-        
-        COL_WAIT    : next_state <= (i_chip_write_ready) ? COL_WRITE : COL_WAIT;
-        COL_WRITE   : next_state <= INC_COL;
-        INC_COL     : next_state <= (col > 81) ? ROW_WRITE : COL_WAIT;
-        
+        IDLE        :   if(i_start) next = COL_WRITE; 
+        COL_WAIT    :   if (i_chip_write_ready) next = COL_WRITE;
+        COL_WRITE   :   next = INC_COL;
+        INC_COL     :   if (col > 81) next = ROW_WRITE; 
+                        else  next = COL_WAIT;
+        ROW_WAIT    :   if (i_chip_write_ready) next =  ROW_WRITE;
+        ROW_WRITE   :   next = INC_ROW;
+        INC_ROW     :   if (row > 24) next = KEY_ENABLE;
+                        else  next = ROW_WAIT;
+        KEY_ENABLE  :   if (i_chip_write_ready) next = DONE;
 
-        ROW_WAIT    : next_state <= (i_chip_write_ready) ? ROW_WRITE : ROW_WAIT;
-        ROW_WRITE   : next_state <= INC_ROW;
-        INC_COL     : next_state <= (row > 24) ? ROW_WRITE : ROW_WAIT;
-
-        KEY_ENABLE  : next_state <= (i_chip_write_ready) ? DONE : KEY_ENABLE;
-
-        DONE        : next_state <= IDLE;
-        default     : next_state <= IDLE;
+        DONE        :   next = IDLE;
+        default     :    next = IDLE;
         endcase
     end
+
 // Salidas
     always @(posedge clk) begin
-        case (next_state)
-            IDLE        : next_state <= i_start ? COL_WRITE : IDLE; 
-            
-            COL_WAIT    : next_state <= (i_chip_write_ready) ? COL_WRITE : COL_WAIT;
-            COL_WRITE   : next_state <= INC_COL;
-            INC_COL     : next_state <= (col > 81) ? ROW_WRITE : COL_WAIT;
-            
+        o_col_reg_write <= 1'b0;
+        o_row_reg_write <= 1'b0;
+        o_col_reg_data <= 1'b0;
+        o_row_reg_data <= 1'b0;
+        o_done <= 1'b0;
 
-            ROW_WAIT    : next_state <= (i_chip_write_ready) ? ROW_WRITE : ROW_WAIT;
-            ROW_WRITE   : next_state <= INC_ROW;
-            INC_COL     : next_state <= (row > 24) ? ROW_WRITE : ROW_WAIT;
-
-            KEY_ENABLE  : next_state <= (i_chip_write_ready) ? DONE : KEY_ENABLE;
-
-            DONE        : next_state <= IDLE;
-            default     : next_state <= IDLE;
+        case (next)
+            IDLE : begin
+                col <= 0;
+                row <= 0;
+            end
+            COL_WRITE   : begin 
+                o_col_reg_write <= 1'b1;
+                o_col_reg_data <= 1'b1;
+            end
+            INC_COL : begin
+                col <= col + 1;
+            end
+            ROW_WRITE   : begin
+                o_row_reg_write <= 1'b1;
+                o_row_reg_data <= 1'b0;
+                end 
+                
+            INC_ROW : begin
+                row <= row + 1;
+            end
+            KEY_ENABLE  : o_key_wren <= 1'b0;
+            DONE        : o_done <= 1'b1;
+            default     : begin
+                o_col_reg_write <= 1'b0;
+                o_row_reg_write <= 1'b0;
+                o_col_reg_data <= 1'b0;
+                o_row_reg_data <= 1'b0;
+                o_done <= 1'b0;
+            end
         endcase
     end
 
-/* SALIDAS */
-    assign o_col_reg_data  = (state == COL_WRITE_1);
-    assign o_col_reg_write = (state == COL_WRITE_1) || (fsm_row_done);
- 
-    assign o_done = (state == DONE);
-    assign fsm_row_go = (state == ARL_CONFIG) || (state == NE_CONFIG) || (state == SE_CONFIG) || (state == WW_CONFIG);
 
 
 endmodule
