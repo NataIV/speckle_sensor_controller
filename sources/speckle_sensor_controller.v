@@ -447,21 +447,21 @@ top_fsm u_top_fsm(
 
 
 assign to_ram_read    = from_cfg_fsm_o_ram_read;// | from_process_fsm_ram_read;
-assign to_ram_wren    = from_scan_fsm_ram_wren | from_process_fsm_ram_wren;
+assign to_ram_wren    = from_scan_fsm_ram_wren;// | from_process_fsm_ram_wren;
 assign to_ram_data_in = (to_scan_fsm_start) ? i_adc_val :
                         (to_process_fsm_start) ? from_process_fsm_ram_data : 12'b0000_0000_0000;
 assign to_ram_rsta    = 1'b0;
 assign to_ram_ena     = 1'b1;
-assign to_cnt_col_control = from_cfg_fsm_col_control | from_scan_fsm_col_control | from_process_fsm_col_control;
-assign to_cnt_row_control = from_cfg_fsm_row_control | from_scan_fsm_row_control | from_process_fsm_row_control;
+assign to_cnt_col_control =  from_scan_fsm_col_control; //| from_process_fsm_col_control | from_cfg_fsm_col_control;
+assign to_cnt_row_control =  from_scan_fsm_row_control; //| from_process_fsm_row_control | from_cfg_fsm_row_control;
 
 
 
-assign to_chip_driver_write_key = from_reset_fsm_key_write     | from_cfg_fsm_key_wren | from_scan_fsm_key_write;
-assign to_chip_driver_write_col = from_reset_fsm_col_reg_write | from_cfg_fsm_col_reg_write | from_scan_fsm_col_reg_write;
-assign to_chip_driver_write_row = from_reset_fsm_row_reg_write | from_cfg_fsm_row_reg_write | from_scan_fsm_row_reg_write;
-assign to_chip_driver_data_col  = from_reset_fsm_col_reg_data  | from_cfg_fsm_col_reg_data | from_scan_fsm_col_reg_data;
-assign to_chip_driver_data_row  = from_reset_fsm_row_reg_data  | from_cfg_fsm_row_reg_data | from_scan_fsm_row_reg_data;
+assign to_chip_driver_write_key = from_reset_fsm_key_write     | from_scan_fsm_key_write        ;//|  from_cfg_fsm_key_wren;
+assign to_chip_driver_write_col = from_reset_fsm_col_reg_write | from_scan_fsm_col_reg_write    ;//|  from_cfg_fsm_col_reg_write;
+assign to_chip_driver_write_row = from_reset_fsm_row_reg_write | from_scan_fsm_row_reg_write    ;//|  from_cfg_fsm_row_reg_write;
+assign to_chip_driver_data_col  = from_reset_fsm_col_reg_data  | from_scan_fsm_col_reg_data     ;//|  from_cfg_fsm_col_reg_data;
+assign to_chip_driver_data_row  = from_reset_fsm_row_reg_data  | from_scan_fsm_row_reg_data     ;//|  from_cfg_fsm_row_reg_data;
 assign to_chip_driver_rst_row   = from_scan_fsm_row_rst;
 assign chip_row_ena = from_scan_fsm_row_ena;
 assign chip_col_rst = from_scan_fsm_col_rst;
