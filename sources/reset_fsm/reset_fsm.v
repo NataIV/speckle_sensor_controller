@@ -15,9 +15,11 @@ module reset_fsm #(
 
     output reg o_col_reg_data,
     output reg o_col_reg_write,
-
-    output reg o_key_wren,
     
+    output reg o_row_ena,
+    output reg o_row_rst,
+    output reg o_col_rst,
+    output reg o_key_write,
     output reg o_done
 );
 
@@ -70,6 +72,9 @@ module reset_fsm #(
 
 // Salidas
     always @(posedge clk) begin
+        o_row_ena <= 1'b0; 
+        o_row_rst <= 1'b0;
+        o_col_rst <= 1'b0;
         o_col_reg_write <= 1'b0;
         o_row_reg_write <= 1'b0;
         o_col_reg_data <= 1'b0;
@@ -103,6 +108,9 @@ module reset_fsm #(
                 o_row_reg_write <= 1'b0;
                 o_col_reg_data <= 1'b0;
                 o_row_reg_data <= 1'b0;
+                o_row_ena <= 1'b0; 
+                o_row_rst <= 1'b0;
+                o_col_rst <= 1'b0;
                 o_done <= 1'b0;
             end
         endcase

@@ -265,8 +265,12 @@ wire from_reset_fsm_row_reg_write;
 wire from_reset_fsm_col_reg_data;
 wire from_reset_fsm_col_reg_write;
 wire from_reset_fsm_key_write;
+wire from_reset_fsm_row_ena;
+wire from_reset_fsm_row_rst;
+wire from_reset_fsm_col_rst;
 wire from_reset_done;
 
+// RESET FSM INSTANTIATION
 reset_fsm#(
     .NB_DATA            ( NB_DATA )
 )u_reset_fsm(
@@ -279,9 +283,11 @@ reset_fsm#(
     .o_col_reg_data     ( from_reset_fsm_col_reg_data       ),
     .o_col_reg_write    ( from_reset_fsm_col_reg_write      ),
     .o_key_wren         ( from_reset_fsm_key_write          ),
+    .o_row_ena          ( from_reset_fsm_row_ena            ),
+    .o_row_rst          ( from_reset_fsm_row_rst            ),
+    .o_col_rst          ( from_reset_fsm_col_rst            ),
     .o_done             ( from_reset_done                   )
 );
-
 
 // SCAN MODULE INSTANTIATION
 scan_module#(
@@ -462,9 +468,9 @@ assign to_chip_driver_write_col = from_reset_fsm_col_reg_write | from_scan_fsm_c
 assign to_chip_driver_write_row = from_reset_fsm_row_reg_write | from_scan_fsm_row_reg_write    ;//|  from_cfg_fsm_row_reg_write;
 assign to_chip_driver_data_col  = from_reset_fsm_col_reg_data  | from_scan_fsm_col_reg_data     ;//|  from_cfg_fsm_col_reg_data;
 assign to_chip_driver_data_row  = from_reset_fsm_row_reg_data  | from_scan_fsm_row_reg_data     ;//|  from_cfg_fsm_row_reg_data;
-assign to_chip_driver_rst_row   = from_scan_fsm_row_rst;
-assign chip_row_ena = from_scan_fsm_row_ena;
-assign chip_col_rst = from_scan_fsm_col_rst;
+assign to_chip_driver_rst_row   = from_reset_fsm_row_rst       | from_scan_fsm_row_rst;
+assign chip_row_ena             = from_reset_fsm_row_ena       | from_scan_fsm_row_ena;
+assign chip_col_rst             = from_reset_fsm_col_rst       | from_scan_fsm_col_rst;
 
 // OUTPUTS
 assign o_adc_trigger = from_scan_fsm_adc_trig;
