@@ -282,7 +282,7 @@ reset_fsm#(
     .o_row_reg_write    ( from_reset_fsm_row_reg_write      ),
     .o_col_reg_data     ( from_reset_fsm_col_reg_data       ),
     .o_col_reg_write    ( from_reset_fsm_col_reg_write      ),
-    .o_key_wren         ( from_reset_fsm_key_write          ),
+    .o_key_write        ( from_reset_fsm_key_write          ),
     .o_row_ena          ( from_reset_fsm_row_ena            ),
     .o_row_rst          ( from_reset_fsm_row_rst            ),
     .o_col_rst          ( from_reset_fsm_col_rst            ),
@@ -291,30 +291,32 @@ reset_fsm#(
 
 // SCAN MODULE INSTANTIATION
 scan_module#(
-    .PIXEL_N_ROWS                       ( ROWS                               ),
-    .PIXEL_N_COLS                       ( COLS                               ),
-    .NB_ADC                             ( NB_DATA                            )
+    .PIXEL_N_ROWS                   ( ROWS                               ),
+    .PIXEL_N_COLS                   ( COLS                               ),
+    .NB_ADC                         ( NB_DATA                            )
 )u_scan_module(
-        .clk                            ( clk                                ),
-        .i_rst                          ( rst                                ),
-        .i_start_scan                   ( to_scan_fsm_start                  ),
-        .i_adc_done                     ( to_scan_fsm_adc_done               ),
-        .i_row_overflow                 ( to_scan_fsm_row_overflow           ),
-        .i_col_overflow                 ( to_scan_fsm_col_overflow           ),
-        .i_chip_rdy                     ( to_scan_fsm_chip_rdy               ),
-        .o_scan_ready                   ( scan_done                          ),
-        .o_ram_write                    ( from_scan_fsm_ram_wren             ),
-        .o_adc_trig                     ( from_scan_fsm_adc_trig             ),
-        .o_row_control                  ( from_scan_fsm_row_control          ),
-        .o_col_control                  ( from_scan_fsm_col_control          ),
-        .o_row_reg_data                 ( from_scan_fsm_row_reg_data         ),
-        .o_row_reg_write                ( from_scan_fsm_row_reg_write        ),
-        .o_col_reg_data                 ( from_scan_fsm_col_reg_data         ),
-        .o_col_reg_write                ( from_scan_fsm_col_reg_write        ),
-        .o_key_write                    ( from_scan_fsm_key_write            ),
-        .o_row_ena                      ( from_scan_fsm_row_ena              ),
-        .o_row_rst                      ( from_scan_fsm_row_rst              ),
-        .o_col_rst                      ( from_scan_fsm_col_rst              )
+    .clk                            ( clk                                ),
+    .i_rst                          ( rst                                ),
+    .i_start_scan                   ( to_scan_fsm_start                  ),
+    .i_adc_done                     ( to_scan_fsm_adc_done               ),
+    .i_adc_val                      ( i_adc_val                          ),
+    .i_row_overflow                 ( to_scan_fsm_row_overflow           ),
+    .i_col_overflow                 ( to_scan_fsm_col_overflow           ),
+    .i_chip_rdy                     ( to_scan_fsm_chip_rdy               ),
+    .o_scan_ready                   ( scan_done                          ),
+    .o_ram_write                    ( from_scan_fsm_ram_wren             ),
+    .o_adc_trig                     ( from_scan_fsm_adc_trig             ),
+    .o_pixel_val                    ( from_scan_fsm_pixel_val            ),
+    .o_row_control                  ( from_scan_fsm_row_control          ),
+    .o_col_control                  ( from_scan_fsm_col_control          ),
+    .o_row_reg_data                 ( from_scan_fsm_row_reg_data         ),
+    .o_row_reg_write                ( from_scan_fsm_row_reg_write        ),
+    .o_col_reg_data                 ( from_scan_fsm_col_reg_data         ),
+    .o_col_reg_write                ( from_scan_fsm_col_reg_write        ),
+    .o_key_write                    ( from_scan_fsm_key_write            ),
+    .o_row_ena                      ( from_scan_fsm_row_ena              ),
+    .o_row_rst                      ( from_scan_fsm_row_rst              ),
+    .o_col_rst                      ( from_scan_fsm_col_rst              )
 );
 
 

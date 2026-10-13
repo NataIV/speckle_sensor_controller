@@ -79,6 +79,7 @@ module reset_fsm #(
         o_row_reg_write <= 1'b0;
         o_col_reg_data <= 1'b0;
         o_row_reg_data <= 1'b0;
+        o_key_write <= 1'b0;
         o_done <= 1'b0;
 
         case (next)
@@ -101,13 +102,14 @@ module reset_fsm #(
             INC_ROW : begin
                 row <= row + 1;
             end
-            KEY_ENABLE  : o_key_wren <= 1'b0;
+            KEY_ENABLE  : o_key_write <= 1'b0;
             DONE        : o_done <= 1'b1;
             default     : begin
                 o_col_reg_write <= 1'b0;
                 o_row_reg_write <= 1'b0;
                 o_col_reg_data <= 1'b0;
                 o_row_reg_data <= 1'b0;
+                o_key_write <= 1'b0;
                 o_row_ena <= 1'b0; 
                 o_row_rst <= 1'b0;
                 o_col_rst <= 1'b0;
