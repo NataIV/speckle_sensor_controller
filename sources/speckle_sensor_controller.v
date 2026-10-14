@@ -44,7 +44,8 @@ module speckle_sensor_controller #(
     output [31:0] o_ram_out_reg,
 
     input  [NB_DATA-1:0] i_adc_val,
-    input  i_adc_done, //(eoc)
+    input  i_adc_eoc, //(eoc)
+    input  i_avg_len,
 
     input  [NB_DATA-1:0] i_umbral,
 
@@ -223,7 +224,7 @@ assign to_cfg_fsm_col_is_even      = ~from_cnt_col_value[0];
 //assign to_chip_driver_i_clk_div_key  = FREQ_DIV_KEY;
 
 // -- SCAN FSM
-assign to_scan_fsm_adc_done      = i_adc_done;
+//assign to_scan_fsm_adc_done      = i_adc_done;
 assign to_scan_fsm_row_overflow  = from_cnt_row_overflow;
 assign to_scan_fsm_col_overflow  = from_cnt_col_overflow;
 assign to_scan_fsm_chip_rdy      = from_chip_driver_rdy; 
@@ -289,6 +290,24 @@ reset_fsm#(
     .o_done             ( from_reset_done                   )
 );
 
+
+/// AVERAGE MODULE
+wire [NB_DATA-1:0] avg_result;
+
+avg#(
+    .NB_DATA      ( NB_DATA )
+)u_avg(
+    .clk          ( clk                         ),
+    .rst          ( rst                         ),
+    .i_start      ( from_scan_fsm_adc_trig      ),
+    .i_eoc        ( i_adc_eoc                   ),
+    .i_size       ( i_avg_len                   ),
+    .i_data       ( adc_result                  ),
+    .o_done       ( to_scan_fsm_adc_done        ),
+    .o_trig       ( o_adc_trigger               ),
+    .o_data       ( avg_result                  )
+);
+
 // SCAN MODULE INSTANTIATION
 scan_module#(
     .PIXEL_N_ROWS                   ( ROWS                               ),
@@ -299,14 +318,12 @@ scan_module#(
     .i_rst                          ( rst                                ),
     .i_start_scan                   ( to_scan_fsm_start                  ),
     .i_adc_done                     ( to_scan_fsm_adc_done               ),
-    .i_adc_val                      ( i_adc_val                          ),
     .i_row_overflow                 ( to_scan_fsm_row_overflow           ),
     .i_col_overflow                 ( to_scan_fsm_col_overflow           ),
     .i_chip_rdy                     ( to_scan_fsm_chip_rdy               ),
     .o_scan_ready                   ( scan_done                          ),
     .o_ram_write                    ( from_scan_fsm_ram_wren             ),
     .o_adc_trig                     ( from_scan_fsm_adc_trig             ),
-    .o_pixel_val                    ( from_scan_fsm_pixel_val            ),
     .o_row_control                  ( from_scan_fsm_row_control          ),
     .o_col_control                  ( from_scan_fsm_col_control          ),
     .o_row_reg_data                 ( from_scan_fsm_row_reg_data         ),
@@ -456,7 +473,7 @@ top_fsm u_top_fsm(
 
 assign to_ram_read    = from_cfg_fsm_o_ram_read;// | from_process_fsm_ram_read;
 assign to_ram_wren    = from_scan_fsm_ram_wren;// | from_process_fsm_ram_wren;
-assign to_ram_data_in = (to_scan_fsm_start) ? i_adc_val :
+assign to_ram_data_in = (to_scan_fsm_start) ? avg_result :
                         (to_process_fsm_start) ? from_process_fsm_ram_data : 12'b0000_0000_0000;
 assign to_ram_rsta    = 1'b0;
 assign to_ram_ena     = 1'b1;
@@ -475,7 +492,6 @@ assign chip_row_ena             = from_reset_fsm_row_ena       | from_scan_fsm_r
 assign chip_col_rst             = from_reset_fsm_col_rst       | from_scan_fsm_col_rst;
 
 // OUTPUTS
-assign o_adc_trigger = from_scan_fsm_adc_trig;
 assign o_status [31:13] = 19'b0000_0000_0000_0000_000;
 assign o_status [12:4] = o_chip_signals;
 assign o_status[3:0] = {

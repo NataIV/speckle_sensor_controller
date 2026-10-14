@@ -48,14 +48,12 @@ module speckle_sensor_controller_xadc #(
     output [11:0] o_chip_signals
 );
 
-
-
 localparam NB_RAM_ADDR = $clog2(COLS*ROWS);
 wire busy_out;
 wire adc_trigger;
 wire signed [NB_DATA:0] adc_result_pre;
 wire [NB_DATA-1:0] adc_result;
-wire adc_done;
+wire adc_eoc;
 wire [15:0]do_out;
 wire eos;
 
@@ -75,26 +73,6 @@ assign adc_result_pre = do_out[15-:NB_DATA] - i_analog_offset;
 assign adc_result =  (adc_result_pre[NB_DATA])? 12'H000 : adc_result_pre; // Saturo en caso de numeros negativos
 assign o_analog_value = adc_result;
 
-
-/// PROMEDIO DE MEDICIONES
-wire avg_input_sample_trigger;
-wire avg_done;
-wire [NB_DATA-1:0] avg_result;
-
-avg#(
-    .NB_DATA      ( NB_DATA )
-)u_avg(
-    .clk          ( clk                         ),
-    .rst          ( rst                         ),
-    .i_start      ( adc_trigger                 ),
-    .i_eoc        ( adc_done                    ),
-    .i_size       ( i_avg_len                   ),
-    .i_data       ( adc_result                  ),
-    .o_done       ( avg_done                    ),
-    .o_trig       ( avg_input_sample_trigger    ),
-    .o_data       ( avg_result                  )
-);
-
 // PROMEDIO DE MEDICIONES
 
 adc adc_i(   
@@ -109,7 +87,7 @@ adc adc_i(
     .do_out                       ( do_out                       ),
     .drdy_out                     (                              ),
     .dwe_in                       ( 1'b0                         ),
-    .eoc_out                      ( adc_done                     ),
+    .eoc_out                      ( adc_eoc                      ),
     .eos_out                      ( eos                          ),
     .vauxn6                       ( vauxn6                       ),
     .vauxp6                       ( vauxp6                       ),
@@ -128,30 +106,15 @@ speckle_sensor_controller#(
     .i_optreg        ( i_optreg        ),
     .i_ram_ctrl_reg  ( i_ram_ctrl_reg  ),
     .i_amp_value_reg ( i_amp_value_reg ),
-    // .i_adc_val       ( adc_result      ),
-    // .i_adc_done      ( adc_done        ),
-    // .o_adc_trigger   ( adc_trigger     ),
-    .i_adc_val       ( avg_result      ),
-    .i_adc_done      ( avg_done        ),
-    .o_adc_trigger   ( avg_trigger     ),
+    .i_avg_len       ( i_avg_len       ),
+    .i_adc_val       ( adc_result      ),
+    .i_adc_eoc       ( adc_eoc         ),
+    .o_adc_trigger   ( adc_trigger     ),
     .i_umbral        ( i_umbral        ),
     .i_clk_div_sr    ( i_clk_div_sr    ),
     .i_clk_div_key   ( i_clk_div_key   ),
     .o_ram_out_reg   ( o_ram_out_reg   ),
     .o_chip_signals  ( o_chip_signals  )
 );
-
-// assign o_chip_key_wren = chip_signals[7];
-// assign o_chip_col_clk  = chip_signals[6];
-// assign o_chip_col_rst  = chip_signals[5];
-// assign o_chip_col_data = chip_signals[4];
-// assign o_chip_row_clk  = chip_signals[3];
-// assign o_chip_row_rst  = chip_signals[2];
-// assign o_chip_row_ena  = chip_signals[1];
-// assign o_chip_row_data = chip_signals[0];
-
-// assign led = status[3:0];
-
-
 
 endmodule
