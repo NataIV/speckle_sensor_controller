@@ -45,7 +45,7 @@ module speckle_sensor_controller #(
 
     input  [NB_DATA-1:0] i_adc_val,
     input  i_adc_eoc, //(eoc)
-    input  i_avg_len,
+    input  [2:0] i_avg_len,
 
     input  [NB_DATA-1:0] i_umbral,
 
@@ -98,9 +98,10 @@ localparam RAM_DEPTH = COLS * ROWS;
 
 wire rst = i_optreg[0];
 wire btn_start = i_optreg[1];
-
 wire sw_scan_select = i_optreg[4];
 wire sw_conf_select = i_optreg[5];
+wire sw_reset_select_col_value = i_optreg[6];
+wire sw_reset_select_row_value = i_optreg[7];
 
 // CHIP DRIVER COMPONENT SIGNAL DECLARATIONS
 wire to_chip_driver_data_col;
@@ -177,8 +178,6 @@ wire [$clog2(ROWS)-1:0] from_cnt_row_value   ;
 wire from_cnt_row_overflow;
 
 // TOP FSM SIGNAL CONNECTIONS
-wire [NB_DATA-1 : 0] to_top_fsm_scan_ram_data;
-wire [3:0] to_top_fsm_select_mode;
 wire to_top_fsm_start;
 wire from_top_fsm_done;
 
@@ -198,10 +197,8 @@ wire to_ram_ena;
 
 /*--------------------------- CONNECTIONS ------------------------------*/
 // Input signals connections
-assign rst  = i_optreg[OPT_RST]; //
+//assign rst  = i_optreg[OPT_RST]; //
 assign to_top_fsm_start = i_optreg[OPT_START];
-assign to_top_fsm_scan_ram_data = i_adc_val;
-assign to_top_fsm_select_mode   = i_optreg[MODE_OFFSET-:MODE_WIDTH];
 
 
 // ---- RAM
@@ -278,7 +275,9 @@ reset_fsm#(
     .clk                ( clk                               ),
     .rst                ( rst                               ),
     .i_start            ( to_reset_chip_go                  ),
-    .i_chip_write_ready ( from_chip_driver_rdy              ),
+    .i_chip_write_ready ( from_chip_driver_rdy              ), 
+    .i_col_reg_value    ( sw_reset_select_col_value         ),     
+    .i_row_reg_value    ( sw_reset_select_row_value         ),     
     .o_row_reg_data     ( from_reset_fsm_row_reg_data       ),
     .o_row_reg_write    ( from_reset_fsm_row_reg_write      ),
     .o_col_reg_data     ( from_reset_fsm_col_reg_data       ),
@@ -301,8 +300,8 @@ avg#(
     .rst          ( rst                         ),
     .i_start      ( from_scan_fsm_adc_trig      ),
     .i_eoc        ( i_adc_eoc                   ),
+    .i_data       ( i_adc_val                   ),
     .i_size       ( i_avg_len                   ),
-    .i_data       ( adc_result                  ),
     .o_done       ( to_scan_fsm_adc_done        ),
     .o_trig       ( o_adc_trigger               ),
     .o_data       ( avg_result                  )
@@ -430,10 +429,6 @@ xilinx_single_port_ram_no_change #(
 );
 
 // INSTANCIACION DEL CONFIGURADOR DE AMPLIFICADORES, TODOS MISMA GANANCIA
-wire to_chip_amp_clk;
-wire to_chip_amp_rst;
-wire to_chip_amp_ena;
-wire to_chip_amp_data;
 wire to_amp_config_go = i_optreg[2];
 wire from_amp_config_done;
 
@@ -495,15 +490,15 @@ assign chip_col_rst             = from_reset_fsm_col_rst       | from_scan_fsm_c
 assign o_status [31:13] = 19'b0000_0000_0000_0000_000;
 assign o_status [12:4] = o_chip_signals;
 assign o_status[3:0] = {
-    to_scan_fsm_start,
-    to_process_fsm_start,
+    from_top_fsm_done,
+    to_amp_config_go,
     to_cfg_fsm_start,
-    (from_top_fsm_done & from_amp_config_done)
+    to_scan_fsm_start
 };
 
 
 assign o_ram_out_reg[11:0] = from_ram_data_out;
-assign o_ram_out_reg[31:10] = 20'b0;
+assign o_ram_out_reg[31:12] = 20'b0;
 
 endmodule
 

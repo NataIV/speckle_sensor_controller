@@ -43,9 +43,12 @@ module top_fsm
     always @(*) begin
         next = state;
         case (state)
-            IDLE:       if(i_start & i_select_scan)         next = RESET;
-                        else if(i_start & i_select_config)  next = PROCESS;
-            RESET:      if(i_rst_chip_done)                 next = SCAN;
+            IDLE:       if(i_start)                         next = RESET;
+            RESET:      if(i_rst_chip_done) begin      
+                            if(i_select_scan)               next = SCAN;
+                            else if(i_select_config)        next = PROCESS;
+                            else                            next = DONE;   
+                        end                                     
             SCAN:       if(i_scan_done & i_select_config)   next = PROCESS;
                         else if (i_scan_done)               next = DONE;
             PROCESS:    if(i_process_done)                  next = CONF;

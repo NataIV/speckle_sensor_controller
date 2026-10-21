@@ -29,6 +29,7 @@ reg  clk             ;
 reg  [ 3:0] selection;
 wire [ 3:0] btn      ;
 wire [ 3:0] led      ;
+reg  [ 2:0] avg_len;
 reg  [11:0] i_adc_val;
 reg  [16:0] adc_cnt;
 reg  i_adc_done      ;
@@ -84,6 +85,7 @@ end
 // Stimulus
 initial begin
     descripcion = "Iniciando simulacion";
+    avg_len = 3'b000;
     amp_config = 1'b0;
     start = 1'b0;
     i_adc_done = 1'b1;
@@ -140,7 +142,8 @@ speckle_sensor_controller_pl_only#(
     .i_ram_ctrl_reg               ( 0                            ),
     .i_amp_value_reg              ( 6'b111010                    ),
     .i_adc_val                    ( i_adc_val                    ),
-    .i_adc_done                   ( i_adc_done                   ),
+    .i_adc_eoc                    ( i_adc_done                   ),    
+    .i_avg_len                    ( avg_len                      ),
     .i_umbral                     ( 3                            ),
     .i_clk_div_sr                 ( 4                            ),
     .i_clk_div_key                ( 8                            ),

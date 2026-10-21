@@ -16,6 +16,7 @@ module speckle_sensor_controller_pl_only #(
 
     input  [NB_DATA-1:0] i_adc_val,
     input  i_adc_eoc,
+    input  [2:0] i_avg_len,
 
     input  [31:0] i_ram_ctrl_reg,
     output [31:0] o_ram_out_reg,
@@ -65,6 +66,7 @@ speckle_sensor_controller#(
     .o_ram_out_reg   ( o_ram_out_reg   ),
     .i_adc_val       ( i_adc_val       ),
     .i_adc_eoc       ( i_adc_eoc       ),
+    .i_avg_len       ( i_avg_len       ),
     .i_umbral        ( i_umbral        ),
     .i_clk_div_sr    ( i_clk_div_sr    ),
     .i_clk_div_key   ( i_clk_div_key   ),

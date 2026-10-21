@@ -58,16 +58,15 @@ wire [15:0]do_out;
 wire eos;
 
 
-wire  [NB_DATA-1:0] adc_val;
 
-wire ram_dbg;
-wire [11:0] ram_out_reg;
-wire [9:0]  ram_dbg_addr;
-wire [11:0] ram_dbg_input = 0;
+//wire ram_dbg;
+//wire [11:0] ram_out_reg;
+//wire [9:0]  ram_dbg_addr;
+//wire [11:0] ram_dbg_input = 0;
 
-wire [11:0] chip_signals;
-wire [31:0] optreg;
-wire [31:0] status;
+//wire [11:0] chip_signals;
+//wire [31:0] optreg;
+//wire [31:0] status;
 
 assign adc_result_pre = do_out[15-:NB_DATA] - i_analog_offset; 
 assign adc_result =  (adc_result_pre[NB_DATA])? 12'H000 : adc_result_pre; // Saturo en caso de numeros negativos
