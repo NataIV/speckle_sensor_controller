@@ -17,6 +17,7 @@ module amp_sr #(
 
 
 reg [N_BITS-1:0] data;
+reg [$clog2(N_BITS)-1:0] cnt;
 
 // SHIFT REGISTER
 always @(posedge clk ) begin
@@ -34,7 +35,6 @@ end
 assign o_data = data[N_BITS-1];
 
 // COUNTER
-reg [$clog2(N_BITS)-1:0] cnt;
 always @(posedge clk) begin
     if(rst) begin
         cnt <= {$clog2(N_BITS){1'b0}};

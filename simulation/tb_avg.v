@@ -4,7 +4,7 @@
 module tb_avg();
 
     parameter N_BITS = 6;
-    time PERIOD = 10;
+    time PERIOD = 8;
 
     reg clk;     
     reg rst;     

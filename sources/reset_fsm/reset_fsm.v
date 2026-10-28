@@ -62,7 +62,9 @@ module reset_fsm #(
         case (state)
         IDLE        :   if(i_start) next = ROW_RST; 
         ROW_RST     :   if (i_chip_write_ready) next = COL_RST; 
-        COL_RST     :   if (i_chip_write_ready) next = ROW_WRITE;
+        COL_RST     :   if (i_chip_write_ready) 
+                            if(i_row_reg_value) next = ROW_WRITE;
+                            else                next = COL_WRITE;
         ROW_WRITE   :   if (i_chip_write_ready) next = ROW_WAIT;
         ROW_WAIT    :   if (i_chip_write_ready) next = INC_ROW;
         INC_ROW     :   if (row < 24) next = ROW_WRITE; 

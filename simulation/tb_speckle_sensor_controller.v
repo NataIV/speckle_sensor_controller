@@ -26,7 +26,7 @@ localparam PERIOD = 10;
 
 reg [8*64-1:0] descripcion;
 reg  clk             ;
-reg  [ 3:0] selection;
+wire [ 3:0] sw       ;
 wire [ 3:0] btn      ;
 wire [ 3:0] led      ;
 reg  [ 2:0] avg_len;
@@ -51,15 +51,19 @@ wire [9:0] row, col;
 wire [9:0] mem_addr;
 reg  [11:0] mem [15:0];
 
+reg sw_scan, sw_config, sw_reset_val, sw_dark_scan;
+reg done_scan, done_reset, done_process, done_config;
 reg rst, start, amp_config;
 assign btn[0] = rst;
 assign btn[1] = start;
 assign btn[2] = amp_config;
 assign btn[3] = 1'b0;
 
+assign sw = {sw_reset_val, sw_dark_scan, sw_config, sw_scan};
+
 assign col = uut.u_speckle_sensor_controller.from_cnt_col_value;
 assign row = uut.u_speckle_sensor_controller.from_cnt_row_value;
-assign mem_addr = col * 24 + row;
+assign mem_addr = col * 4 + row;
 
 initial clk = 1'b1;
 always #(PERIOD/2) clk =~ clk;
@@ -71,34 +75,38 @@ initial begin
     $readmemh("init.mem", mem, 0, 15);
 end
 
+/*
+    Simulacion de los valores de los pixeles
+*/
 always @(posedge clk) begin
     if(rst)begin
         i_adc_val <= mem[0];
-        adc_cnt <= 0;
     end
     if(o_adc_trigger)begin
-        i_adc_val <= mem[adc_cnt];
-        adc_cnt <= adc_cnt + 1;
+        i_adc_val <= mem[mem_addr];
     end
 end
 
 // Stimulus
 initial begin
     descripcion = "Iniciando simulacion";
-    avg_len = 3'b000;
+    avg_len = 3'b010;
     amp_config = 1'b0;
     start = 1'b0;
     i_adc_done = 1'b1;
-    selection = 4'b0111;
+    sw_reset_val = 1'b1;
+    sw_config = 1'b1;
+    sw_scan = 1'b1;
+    sw_dark_scan = 1'b0;
     @(negedge rst);
     #100
     
-    descripcion = "Configurando amplificadores";
-    @(posedge clk);
-    amp_config = 1'b1;
-    @(posedge clk);
-    amp_config = 1'b0;
-    #7000;
+    // descripcion = "Configurando amplificadores";
+    // @(posedge clk);
+    // amp_config = 1'b1;
+    // @(posedge clk);
+    // amp_config = 1'b0;
+    // #7000;
     
     descripcion = "Iniciando Escaneo";
     @(posedge clk);
@@ -113,7 +121,7 @@ end
 // initial begin
 //     start = 1'b0;
 //     i_adc_done = 1'b1;
-//     selection = 4'b0000;
+//     sw = 4'b0000;
 //     amp_config = 1'b0;
 //     @(negedge rst);
 //     #20;
@@ -136,7 +144,7 @@ speckle_sensor_controller_pl_only#(
     .INIT_FILE ( " .mem" )
 )uut(
     .clk                          ( clk                          ),
-    .sw                           ( selection                    ),
+    .sw                           ( sw                    ),
     .btn                          ( btn                          ),
     .led                          ( led                          ),
     .i_ram_ctrl_reg               ( 0                            ),

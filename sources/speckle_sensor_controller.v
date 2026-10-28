@@ -182,8 +182,8 @@ wire to_top_fsm_start;
 wire from_top_fsm_done;
 
 
-wire [$clog2(COLS)-1:0] ram_col_addr;
-wire [$clog2(ROWS)-1:0] ram_row_addr;
+wire [$clog2(COLS)-1:0]      ram_col_addr;
+wire [$clog2(ROWS)-1:0]      ram_row_addr;
 wire [$clog2(RAM_DEPTH)-1:0] __ram_addr_unsat;
 wire [$clog2(RAM_DEPTH)-1:0] to_ram_addr; 
 wire [NB_DATA-1:0]           from_ram_data_out;
@@ -192,7 +192,7 @@ wire                         to_ram_wren;
 wire [NB_DATA-1:0]           to_ram_data_in;
 wire                         to_ram_read;
 wire                         to_ram_rsta;
-wire to_ram_ena;
+wire                         to_ram_ena;
 
 
 /*--------------------------- CONNECTIONS ------------------------------*/
